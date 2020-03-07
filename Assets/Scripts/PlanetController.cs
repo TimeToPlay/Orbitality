@@ -1,10 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using DefaultNamespace;
 using SO;
 using UnityEngine;
 using Zenject;
 
-public class PlanetController : MonoBehaviour, IPoolable<SettingsSO.PlanetSettings, IMemoryPool>
+public class PlanetController : CelestialObject, IPoolable<SettingsSO.PlanetSettings, IMemoryPool>
 {
     private SettingsSO.PlanetSettings currentSettings;
     
@@ -34,7 +35,7 @@ public class PlanetController : MonoBehaviour, IPoolable<SettingsSO.PlanetSettin
 
     public void Shoot()
     {
-        _rocketFactory.Create(muzzleTransform.position, muzzleTransform.rotation, RocketType.Fast);
+        _rocketFactory.Create(muzzleTransform.position, transform.rotation, RocketType.Fast);
     }
     public class Factory : PlaceholderFactory<SettingsSO.PlanetSettings, PlanetController>{}
 
@@ -48,5 +49,10 @@ public class PlanetController : MonoBehaviour, IPoolable<SettingsSO.PlanetSettin
         currentSettings = settings;
         transform.localScale = new Vector3(settings.planetScale, settings.planetScale,settings.planetScale);
         currentAngleToSun = Random.Range(0, Mathf.PI * 2);
+    }
+
+    public override float GetGravityModifier()
+    {
+        return transform.localScale.x * 210;
     }
 }

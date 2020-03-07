@@ -1,9 +1,12 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using DefaultNamespace;
 using SO;
 using UniRx;
 using UnityEngine;
 using Zenject;
+using Random = UnityEngine.Random;
 
 public class GameController : MonoBehaviour
 {
@@ -11,7 +14,8 @@ public class GameController : MonoBehaviour
     private SettingsSO.GameSettings _gameSettings;
     private PlanetController _playerPlanet;
     private List<PlanetController> _enemies = new List<PlanetController>();
-
+    private List<CelestialObject> _celestialObjects = new List<CelestialObject>();
+    [SerializeField] private CelestialObject _sun;
     [Inject]
     void Construct(
         PlanetController.Factory planetFactory,
@@ -38,6 +42,7 @@ public class GameController : MonoBehaviour
         var playerIndex = Random.Range(0, _gameSettings.initialPlanetAmount);
         float previousOrbit = _gameSettings.MinimumOrbitRadius;
         _enemies.Clear();
+        _celestialObjects.Clear();
         for (int i = 0; i < _gameSettings.initialPlanetAmount; i++)
         {
             var randomPlanetSetting = new SettingsSO.PlanetSettings();
@@ -56,10 +61,15 @@ public class GameController : MonoBehaviour
             {
                 _enemies.Add(planet);
             }
+            _celestialObjects.Add(planet);
+            _celestialObjects.Add(_sun);
         }
     }
 
-
+    public List<CelestialObject> GetAllCelestialObjects()
+    {
+        return _celestialObjects;
+    }
     private void ConfigureInput()
     {
         Observable.EveryUpdate().Where(_ => Input.GetKeyDown(KeyCode.Space)).Subscribe(_ =>
@@ -72,5 +82,4 @@ public class GameController : MonoBehaviour
             //todo: switch rockets
         }).AddTo(this);
     }
-
 }

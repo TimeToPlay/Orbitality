@@ -17,18 +17,22 @@ MonoBehaviour:
     MinimumOrbitRadius: 15
     MinPlanetScale: 3
     MaxPlanetScale: 5
+    SolarAngularVelocityMin: 0.2
+    SolarAngularVelocityMax: 0.3
+    SelfRotationVelocityMin: 200
+    SelfRotationVelocityMax: 300
   rocketSettingList:
   - rocketType: 0
     damage: 10
-    acceleration: 10
+    acceleration: 600
     cooldown: 10
   - rocketType: 1
     damage: 2
-    acceleration: 50
+    acceleration: 1200
     cooldown: 2
   - rocketType: 2
     damage: 50
-    acceleration: 2
+    acceleration: 400
     cooldown: 30
   playerPlanetSettings:
     clockwise: 1
