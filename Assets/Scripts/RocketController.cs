@@ -5,10 +5,10 @@ using Zenject;
 
 public class RocketController : MonoBehaviour, IPoolable<Vector3, Quaternion, RocketType, IMemoryPool>
 {
-    private List<SettingsSO.RocketSetting> _rocketSettings;
-    private SettingsSO.RocketSetting currentSetting;
+    private List<SettingsSO.RocketSettings> _rocketSettings;
+    private SettingsSO.RocketSettings _currentSettings;
     [Inject]
-    void Construct(List<SettingsSO.RocketSetting> rocketSettings)
+    void Construct(List<SettingsSO.RocketSettings> rocketSettings)
     {
         _rocketSettings = rocketSettings;
     }
@@ -21,13 +21,12 @@ public class RocketController : MonoBehaviour, IPoolable<Vector3, Quaternion, Ro
     {
         transform.position = initialPos;
         transform.rotation = initialRot;
-        currentSetting = _rocketSettings.Find(setting => setting.rocketType == rocketType);
-        Configure(currentSetting);
+        _currentSettings = _rocketSettings.Find(setting => setting.rocketType == rocketType);
+        Configure(_currentSettings);
     }
 
-    private void Configure(SettingsSO.RocketSetting rocketSetting)
+    private void Configure(SettingsSO.RocketSettings rocketSettings)
     {
-        throw new System.NotImplementedException();
     }
 
     public class Factory : PlaceholderFactory<Vector3, Quaternion, RocketType, RocketController>{}

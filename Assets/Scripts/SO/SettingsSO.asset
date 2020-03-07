@@ -13,7 +13,10 @@ MonoBehaviour:
   m_Name: SettingsSO
   m_EditorClassIdentifier: 
   gameSettings:
-    initialPlanetAmount: 0
+    initialPlanetAmount: 5
+    MinimumOrbitRadius: 15
+    MinPlanetScale: 3
+    MaxPlanetScale: 5
   rocketSettingList:
   - rocketType: 0
     damage: 10
@@ -27,3 +30,9 @@ MonoBehaviour:
     damage: 50
     acceleration: 2
     cooldown: 30
+  playerPlanetSettings:
+    clockwise: 1
+    planetScale: 4
+    orbitRadius: 40
+    solarAngularVelocity: 0.2
+    selfRotationVelocity: 200

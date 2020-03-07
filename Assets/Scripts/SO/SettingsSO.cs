@@ -9,9 +9,11 @@ namespace SO
     public class SettingsSO:  ScriptableObjectInstaller<SettingsSO>
     {
         public GameSettings gameSettings;
-        public List<RocketSetting> rocketSettingList;
+        public List<RocketSettings> rocketSettingList;
+        public PlanetSettings playerPlanetSettings;
+        
         [Serializable]
-        public class RocketSetting
+        public class RocketSettings
         {
             public RocketType rocketType;
             public float damage;
@@ -22,11 +24,29 @@ namespace SO
         public class GameSettings
         {
             public int initialPlanetAmount;
+            public float MinimumOrbitRadius = 15;
+            public float MinPlanetScale = 4f;
+            public float MaxPlanetScale = 8;
+            public float SolarAngularVelocityMin = 0.2f;
+            public float SolarAngularVelocityMax = 0.3f;
+            public float SelfRotationVelocityMin = 200;
+            public float SelfRotationVelocityMax = 300;
+        }
+
+        [Serializable]
+        public class PlanetSettings
+        {
+            public bool clockwise;
+            public float planetScale;
+            public float orbitRadius;
+            public float solarAngularVelocity;
+            public float selfRotationVelocity;
         }
         public override void InstallBindings()
         {
             Container.BindInstance(rocketSettingList);
             Container.BindInstance(gameSettings);
+            Container.BindInstance(playerPlanetSettings);
         }
     }
 
