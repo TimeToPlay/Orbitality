@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using Models;
 using SO;
 using UniRx;
 using UniRx.Triggers;
 using UnityEngine;
 using Zenject;
 
-public class RocketController : MonoBehaviour, IPoolable<Vector3, Quaternion, RocketType, IMemoryPool>, IDamageReceiver, IDisposable
+public class RocketController : MonoBehaviour, IPoolable<IMemoryPool>, IDamageReceiver, IDisposable
 {
     private List<SettingsSO.RocketSettings> _rocketSettings;
     private SettingsSO.RocketSettings _currentSettings;
@@ -16,6 +17,7 @@ public class RocketController : MonoBehaviour, IPoolable<Vector3, Quaternion, Ro
     private GameController _gameController;
     private IMemoryPool _pool;
     private Action _onDisposeListener;
+    private RocketState _rocketState = new RocketState();
 
     [Inject]
     void Construct(List<SettingsSO.RocketSettings> rocketSettings,
@@ -39,29 +41,9 @@ public class RocketController : MonoBehaviour, IPoolable<Vector3, Quaternion, Ro
         transform.position = new Vector3(-1000,-1000);
     }
 
-    public void OnSpawned(Vector3 initialPos, Quaternion initialRot, RocketType rocketType, IMemoryPool pool)
+    public void OnSpawned(IMemoryPool pool)
     {
-        transform.position = initialPos;
-        transform.rotation = Quaternion.Euler(0,0, initialRot.eulerAngles.z);
-        _currentSettings = _rocketSettings.Find(setting => setting.rocketType == rocketType);
-        Configure(_currentSettings);
-        _rigidbody2D.rotation = 0;
-        _rigidbody2D.velocity = transform.up * 27;
         _pool = pool;
-        switch (rocketType)
-        {
-            case RocketType.Normal:
-                ChangeColor(Color.grey);
-                break;
-            case RocketType.Fast:
-                ChangeColor(Color.yellow);
-                break;
-            case RocketType.Deadly:
-                ChangeColor(Color.red);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(rocketType), rocketType, null);
-        }
     }
 
     private void ChangeColor(Color color)
@@ -86,19 +68,46 @@ public class RocketController : MonoBehaviour, IPoolable<Vector3, Quaternion, Ro
         }
     }
 
+    public RocketState GetCurrentState()
+    {
+        return _rocketState;
+    }
+
     private void Update()
     {
         var dir = _rigidbody2D.velocity.normalized;
         var angle = Mathf.Atan2(dir.y, dir.x);
         _pivotTransform.rotation = Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg - 90);
+        _rocketState.posX = transform.position.x;
+        _rocketState.posY = transform.position.y;
+        _rocketState.velocity = _rigidbody2D.velocity.magnitude;
+        _rocketState.rotationZ = transform.rotation.eulerAngles.z;
         if (!_renderer.isVisible)
         {
            Dispose();         
         }
     }
 
-    private void Configure(SettingsSO.RocketSettings rocketSettings)
+    public void Configure(RocketState state)
     {
+        _rocketState = state;
+        transform.position = new Vector3(_rocketState.posX, _rocketState.posY);
+        transform.rotation = Quaternion.Euler(0,0, _rocketState.rotationZ);
+        _currentSettings = _rocketSettings.Find(setting => setting.rocketType == _rocketState.GetRocketType());
+        _rigidbody2D.rotation = 0;
+        _rigidbody2D.velocity = transform.up * _rocketState.velocity;
+        switch (_rocketState.GetRocketType())
+        {
+            case RocketType.Normal:
+                ChangeColor(Color.grey);
+                break;
+            case RocketType.Fast:
+                ChangeColor(Color.yellow);
+                break;
+            case RocketType.Deadly:
+                ChangeColor(Color.red);
+                break;
+        }
     }
 
     public void SetOnDisposeListener(Action onDispose)
@@ -113,7 +122,7 @@ public class RocketController : MonoBehaviour, IPoolable<Vector3, Quaternion, Ro
         if (isActiveAndEnabled) Dispose();
     }
 
-    public class Factory : PlaceholderFactory<Vector3, Quaternion, RocketType, RocketController>{}
+    public class Factory : PlaceholderFactory<RocketController>{}
 
     public void ReceiveDamage(int damage)
     {

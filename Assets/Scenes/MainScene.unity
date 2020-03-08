@@ -2196,6 +2196,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _sun: {fileID: 441465977228700130}
   _mainMenuController: {fileID: 333973826}
+  _rocketPoolRoot: {fileID: 1915249453}
 --- !u!4 &1262806018
 Transform:
   m_ObjectHideFlags: 0

@@ -45,5 +45,9 @@ namespace DefaultNamespace
             return Path.Combine(Application.persistentDataPath, saveFileName);
         }
 
+        public bool IsSaveFileExists()
+        {
+            return File.Exists(GetCurrentSavePath());
+        }
     }
 }

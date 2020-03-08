@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using DefaultNamespace;
 using Models;
 using SO;
 using UnityEngine;
@@ -17,12 +16,14 @@ public class MainSceneInstaller : MonoInstaller
     [SerializeField] private Transform HudRoot;
     public override void InstallBindings()
     {
+        Container.Bind<LocalStorageHelper>().AsSingle().NonLazy();
+        Container.Bind<LocalSaveController>().AsSingle().NonLazy();
         Container.Bind<GameController>().FromComponentInHierarchy().AsSingle();
         Container.Bind<RocketAmmoPanel>().FromComponentInHierarchy().AsSingle();
         Container.Bind<Camera>().FromComponentInHierarchy().AsSingle();
 
-        Container.BindFactory<Vector3, Quaternion, RocketType, RocketController, RocketController.Factory>()
-            .FromPoolableMemoryPool<Vector3, Quaternion, RocketType, RocketController, RocketControllerPool>(poolBinder => poolBinder
+        Container.BindFactory<RocketController, RocketController.Factory>()
+            .FromPoolableMemoryPool<RocketController, RocketControllerPool>(poolBinder => poolBinder
                 .WithInitialSize(40)
                 .FromComponentInNewPrefab(_rocketPrefab)
                 .UnderTransform(RocketsRoot));
@@ -40,6 +41,6 @@ public class MainSceneInstaller : MonoInstaller
                 .UnderTransform(HudRoot));
     }
 }
-class RocketControllerPool : MonoPoolableMemoryPool<Vector3, Quaternion, RocketType, IMemoryPool, RocketController>{}
+class RocketControllerPool : MonoPoolableMemoryPool<IMemoryPool, RocketController>{}
 class PlanetControllerPool : MonoPoolableMemoryPool<PlanetState, IMemoryPool, PlanetController>{}
 class HudPool : MonoPoolableMemoryPool<IMemoryPool, Hud>{}

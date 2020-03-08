@@ -8,10 +8,32 @@ namespace Models
     public class PlanetState
     {
         public int hp;
+        public float currentAngleToSun;
         public Dictionary<RocketType, int> rocketAmmo = new Dictionary<RocketType, int>();
-        public float angleToSun;
         public SettingsSO.PlanetSettings settings;
         public bool isPlayer;
         public List<AmmoInfo> ammoInfoList;
+
+        public void PrepareForSerialize()
+        {
+            ammoInfoList = new List<AmmoInfo>();
+            foreach (var key in rocketAmmo.Keys)
+            {
+                var ammoInfo = new AmmoInfo
+                {
+                    ammo = rocketAmmo[key],
+                    RocketType = key.ToString()
+                };
+                ammoInfoList.Add(ammoInfo);
+            }
+        }
+
+        public void PrepareForDeserialize()
+        {
+            foreach (var ammoInfo in ammoInfoList)
+            {
+                rocketAmmo.Add(ammoInfo.GetRocketType(), ammoInfo.ammo);
+            }
+        }
     }
 }
