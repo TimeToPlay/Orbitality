@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using SO;
 using UniRx;
 using UnityEngine;
 
@@ -25,7 +26,7 @@ namespace DefaultNamespace
                 for (int i = 1; i < trajectory.Length; i++)
                 {
                     var hit2D = Physics2D.Raycast(trajectory[i-1], (trajectory[i] - trajectory[i-1]).normalized);
-                    if (hit2D.collider != null)
+                    if (hit2D.collider)
                     {
                         if (hit2D.collider.gameObject.CompareTag("Sun"))
                         {
@@ -33,13 +34,30 @@ namespace DefaultNamespace
                         }
                         if (hit2D.collider.gameObject.CompareTag("Planet"))
                         {
+                            ChooseRocketType(enemy, hit2D.collider.transform);
                             Observable.TimerFrame(Random.Range(0,5)).Subscribe(_ => enemy.Shoot());
                         }
                     }
                 }
             }
         }
-        
+
+        private void ChooseRocketType(PlanetController enemy, Transform target)
+        {
+            var dist = Vector3.Distance(enemy.transform.position, target.position);
+            if (dist > enemy.GetOrbit())
+            {
+                enemy.SetRocketType(RocketType.Fast);
+            } else if (dist < 15)
+            {
+                enemy.SetRocketType(RocketType.Deadly);
+            }
+            else
+            {
+                enemy.SetRocketType(RocketType.Normal);
+            }
+        }
+
         public Vector3[] CalculateForecastTrajectory(CelestialObject sun, PlanetController planetController)
         {
             Vector3[] positions = new Vector3[100];

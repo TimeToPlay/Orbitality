@@ -31,7 +31,7 @@ MonoBehaviour:
     maxAmmo: 200
   - rocketType: 1
     damage: 10
-    acceleration: 1200
+    acceleration: 1500
     cooldown: 0.1
     minAmmo: 200
     maxAmmo: 400

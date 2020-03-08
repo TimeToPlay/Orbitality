@@ -6,7 +6,7 @@ using UniRx.Triggers;
 using UnityEngine;
 using Zenject;
 
-public class RocketController : MonoBehaviour, IPoolable<Vector3, Quaternion, RocketType, IMemoryPool>, IDamageReceiver
+public class RocketController : MonoBehaviour, IPoolable<Vector3, Quaternion, RocketType, IMemoryPool>, IDamageReceiver, IDisposable
 {
     private List<SettingsSO.RocketSettings> _rocketSettings;
     private SettingsSO.RocketSettings _currentSettings;
@@ -15,6 +15,7 @@ public class RocketController : MonoBehaviour, IPoolable<Vector3, Quaternion, Ro
     [SerializeField] private Renderer _renderer;
     private GameController _gameController;
     private IMemoryPool _pool;
+    private Action _onDisposeListener;
 
     [Inject]
     void Construct(List<SettingsSO.RocketSettings> rocketSettings,
@@ -92,7 +93,7 @@ public class RocketController : MonoBehaviour, IPoolable<Vector3, Quaternion, Ro
         _pivotTransform.rotation = Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg - 90);
         if (!_renderer.isVisible)
         {
-            _pool.Despawn(this);            
+           Dispose();         
         }
     }
 
@@ -100,16 +101,27 @@ public class RocketController : MonoBehaviour, IPoolable<Vector3, Quaternion, Ro
     {
     }
 
+    public void SetOnDisposeListener(Action onDispose)
+    {
+        _onDisposeListener = onDispose;
+    }
+
     private void OnCollisionEnter2D(Collision2D other)
     {
         var damageReceiver = other.gameObject.GetComponent<IDamageReceiver>();
         damageReceiver?.ReceiveDamage(_currentSettings.damage);
-        if (isActiveAndEnabled) _pool.Despawn(this);
+        if (isActiveAndEnabled) Dispose();
     }
 
     public class Factory : PlaceholderFactory<Vector3, Quaternion, RocketType, RocketController>{}
 
     public void ReceiveDamage(int damage)
     {
+    }
+
+    public void Dispose()
+    {
+        _onDisposeListener?.Invoke();
+        _pool.Despawn(this);
     }
 }

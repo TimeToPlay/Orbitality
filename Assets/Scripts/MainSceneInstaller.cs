@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Models;
 using SO;
 using UnityEngine;
 using Zenject;
@@ -18,6 +19,7 @@ public class MainSceneInstaller : MonoInstaller
     {
         Container.Bind<GameController>().FromComponentInHierarchy().AsSingle();
         Container.Bind<RocketAmmoPanel>().FromComponentInHierarchy().AsSingle();
+        Container.Bind<Camera>().FromComponentInHierarchy().AsSingle();
 
         Container.BindFactory<Vector3, Quaternion, RocketType, RocketController, RocketController.Factory>()
             .FromPoolableMemoryPool<Vector3, Quaternion, RocketType, RocketController, RocketControllerPool>(poolBinder => poolBinder

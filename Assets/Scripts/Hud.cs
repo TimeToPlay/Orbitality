@@ -16,7 +16,13 @@ public class Hud : MonoBehaviour, IPoolable<IMemoryPool>
     [SerializeField] private Image cooldownBar;
     [SerializeField] private TextMeshProUGUI nicknameText;
     private RectTransform _rectTransform;
+    private Camera _camera;
 
+    [Inject]
+    void Construct(Camera camera)
+    {
+        _camera = camera;
+    }
     private void Start()
     {
         _rectTransform = GetComponent<RectTransform>();
@@ -37,9 +43,7 @@ public class Hud : MonoBehaviour, IPoolable<IMemoryPool>
 
     public void TransformWorldPosition(Vector3 worldPosition)
     {
-        Vector2 ViewportPosition = Camera.main.WorldToScreenPoint(worldPosition);
-         _rectTransform.position = ViewportPosition;
-
+         _rectTransform.position = _camera.WorldToScreenPoint(worldPosition);
     }
     public void OnDespawned()
     {

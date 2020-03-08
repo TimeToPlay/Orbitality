@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using DefaultNamespace;
+using Models;
 using SO;
 using UniRx;
 using UnityEngine;
@@ -16,9 +17,11 @@ public class GameController : MonoBehaviour
     private List<PlanetController> _enemies = new List<PlanetController>();
     private List<CelestialObject> _celestialObjects = new List<CelestialObject>();
     [SerializeField] private CelestialObject _sun;
+    [SerializeField] private MainMenuController _mainMenuController;
     private List<SettingsSO.RocketSettings> _rocketSettings;
     private AISystem _aiSystem;
     private RocketAmmoPanel _ammoPanel;
+    private GameState currentGameState = GameState.MainMenu;
 
     [Inject]
     void Construct(
@@ -35,20 +38,34 @@ public class GameController : MonoBehaviour
     }
     void Start()
     {
-        StartNewGame();
         ConfigureInput();
         Application.targetFrameRate = 60;
     }
 
     private void Update()
     {
-        _aiSystem.MakeDecisions();
+        if (currentGameState == GameState.Running)
+        {
+            _aiSystem.MakeDecisions();
+        }
     }
 
-    private void StartNewGame()
+    public void DisposePools()
+    {
+        _ammoPanel.SetCurrentRocketType(RocketType.Normal);
+        _playerPlanet.DisposeAllRockets();
+        _playerPlanet.Dispose();
+        foreach (var enemy in _enemies)
+        {
+            enemy.DisposeAllRockets();
+            enemy.Dispose();
+        }
+    }
+    public void StartNewGame()
     {
         //CreatePlayer();
         CreateEnemies();
+        ResumeGame();
         _aiSystem = new AISystem(_sun, _playerPlanet, _enemies);
     }
 
@@ -102,22 +119,59 @@ public class GameController : MonoBehaviour
     }
     private void ConfigureInput()
     {
-        Observable.EveryUpdate().Where(_ => Input.GetKeyDown(KeyCode.Space)).Subscribe(_ =>
+        Observable.EveryUpdate().Where(_ => Input.GetKeyDown(KeyCode.Space) && currentGameState == GameState.Running).Subscribe(_ =>
         {
             _playerPlanet.Shoot();
             _ammoPanel.SetRocketAmmo(_playerPlanet.GetCurrentRocketSettings().rocketType, _playerPlanet.GetCurrentAmmo());
-        }).AddTo(this);
-        Observable.EveryUpdate().Where(_ => Input.GetKeyDown(KeyCode.LeftShift) ||
-                                            Input.GetKeyDown(KeyCode.RightShift)).Subscribe(_ =>
-        {
-            var rocketTypeInt = (int) _playerPlanet.GetCurrentRocketSettings().rocketType;
-            var nextRocketType = rocketTypeInt + 1;
-            if (nextRocketType >= Enum.GetValues(typeof(RocketType)).Length)
+            if (_playerPlanet.GetCurrentAmmo() <= 0)
             {
-                nextRocketType = 0;
+                SwitchToNextNonEmptyAmmo();
             }
-            _ammoPanel.SetCurrentRocketType((RocketType)nextRocketType);
-            _playerPlanet.SetRocketType((RocketType) nextRocketType);
+            
         }).AddTo(this);
+        Observable.EveryUpdate().Where(_ => (Input.GetKeyDown(KeyCode.LeftShift) ||
+                                            Input.GetKeyDown(KeyCode.RightShift)) && currentGameState == GameState.Running).Subscribe(_ =>
+        {
+            SwitchToNextNonEmptyAmmo();
+        }).AddTo(this);
+        Observable.EveryUpdate().Where(_ => Input.GetKeyDown(KeyCode.Escape) && currentGameState == GameState.Running).Subscribe(_ =>
+            {
+                currentGameState = GameState.Paused;
+                Time.timeScale = 0;
+                _mainMenuController.Show(currentGameState);
+            }).AddTo(this);
     }
+
+    private void SwitchToNextNonEmptyAmmo()
+    {
+        var rocketTypeInt = (int) _playerPlanet.GetCurrentRocketSettings().rocketType;
+        for (int i = 0; i < Enum.GetValues(typeof(RocketType)).Length; i++)
+        {
+            rocketTypeInt++;
+            if (rocketTypeInt >= Enum.GetValues(typeof(RocketType)).Length)
+            {
+                rocketTypeInt = 0;
+            }
+            _playerPlanet.SetRocketType((RocketType) rocketTypeInt);
+            if (_playerPlanet.GetCurrentAmmo() <= 0)
+            {
+                continue;
+            }
+            _ammoPanel.SetCurrentRocketType((RocketType) rocketTypeInt);
+            break;
+        }
+    }
+
+    public void ResumeGame()
+    {
+        Time.timeScale = 1;
+        currentGameState = GameState.Running;
+    }
+}
+
+public enum GameState{
+    MainMenu,
+    Running,
+    Paused,
+    Finished
 }

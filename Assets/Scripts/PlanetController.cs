@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Models;
 using SO;
 using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
 using Random = UnityEngine.Random;
 
-public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryPool>
+public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryPool>, IDisposable
 {
     private PlanetState currentState;
     
@@ -24,6 +25,8 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
     private List<SettingsSO.RocketSettings> _rocketSettingsList;
     private bool isDead;
     [SerializeField] private LineRenderer _lineRenderer;
+    private List<RocketController> activeRockets = new List<RocketController>();
+    private List<RocketController> removeList = new List<RocketController>();
 
     [Inject]
     void Construct(RocketController.Factory rocketFactory,
@@ -52,9 +55,25 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
     public void Shoot()
     {
         if (isCooldown || isDead || currentState.rocketAmmo[currentRocketSettings.rocketType] <= 0) return;
-        _rocketFactory.Create(muzzleTransform.position, transform.rotation, currentRocketSettings.rocketType);
+        var rocket = _rocketFactory.Create(muzzleTransform.position, transform.rotation, currentRocketSettings.rocketType);
+        if (!activeRockets.Contains(rocket))
+        {
+            activeRockets.Add(rocket);
+        }
+
         currentState.rocketAmmo[currentRocketSettings.rocketType]--;
         StartCoroutine(StartCooldown());
+    }
+
+    public void DisposeAllRockets()
+    {
+        foreach (var rocket in activeRockets)
+        {
+            if (rocket.isActiveAndEnabled)
+            {
+                rocket.Dispose();
+            }
+        }
     }
 
     public int GetCurrentAmmo()
@@ -92,6 +111,7 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
         transform.localScale = new Vector3(state.settings.planetScale, state.settings.planetScale,state.settings.planetScale);
         currentAngleToSun = Random.Range(0, Mathf.PI * 2);
         _currentHud = _hudFactory.Create();
+        currentRocketSettings = _rocketSettingsList[0];
         _currentHud.Configure("Wayko", state.isPlayer, state.hp);
     }
 
@@ -113,8 +133,7 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
     private void Die()
     {
         isDead = true;
-        _currentHud.Despawn();
-        _pool.Despawn(this);
+        Dispose();
     }
 
     public Transform GetMuzzle()
@@ -122,30 +141,6 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
         return muzzleTransform;
     }
 
-    /*public Vector3[] CalculateForecastTrajectory(CelestialObject sun)
-    {
-        Vector3[] positions = new Vector3[100];
-        positions[0] = GetMuzzle().position;
-        positions[1] = GetMuzzle().position + transform.up * 5;
-        var lasPower = Vector3.zero;
-        var speed = 0f;
-        var time = 0f;
-        for (int i = 2; i < 100; i++)
-        {
-            var dir = (positions[i - 1] - positions[i - 2]).normalized;
-            var gravityPowerMagnitude = sun.GetGravityModifier() / Mathf.Pow(Vector3.Distance(sun.transform.position, positions[i-1]), 2);
-            time += 0.016f;
-            speed = 27 + currentRocketSettings.acceleration * time;
-            var gravityPower = (sun.transform.position - positions[i-1]).normalized * gravityPowerMagnitude;
-
-            var delta = (dir * (speed) + gravityPower) * 0.016f;
-            lasPower = delta;
-            positions[i] = positions[i - 1] + delta;
-        }
-        _lineRenderer.positionCount = positions.Length;
-        _lineRenderer.SetPositions(positions);
-        return positions;
-    }*/
     public SettingsSO.RocketSettings GetCurrentRocketSettings()
     {
         return currentRocketSettings;
@@ -155,22 +150,26 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
     {
         currentRocketSettings = _rocketSettingsList.Find(rocket => rocket.rocketType == nextRocketType);
     }
+
+    public double GetOrbit()
+    {
+        return currentState.settings.orbitRadius;
+    }
+
+    public PlanetState GetCurrentState()
+    {
+        return currentState;
+    }
+
+    public void Dispose()
+    {
+        StopAllCoroutines();
+        isCooldown = false;
+        _currentHud.Despawn();
+        _pool.Despawn(this);
+    }
 }
 
-[Serializable]
-public class PlanetState
-{
-    public int hp;
-    public Dictionary<RocketType, int> rocketAmmo = new Dictionary<RocketType, int>();
-    public float angleToSun;
-    public SettingsSO.PlanetSettings settings;
-    public bool isPlayer;
-    public List<AmmoInfo> ammoInfoList;
-}
 
-[Serializable]
-public class AmmoInfo
-{
-    public string RocketType;
-    public int ammo;
-}
+
+
