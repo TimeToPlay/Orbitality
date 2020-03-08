@@ -3,6 +3,7 @@
 public class CelestialObject : MonoBehaviour, IDamageReceiver
 {
     [SerializeField] private float mass;
+
     public virtual float GetGravityModifier()
     {
         return mass;
@@ -10,7 +11,6 @@ public class CelestialObject : MonoBehaviour, IDamageReceiver
 
     public virtual void ReceiveDamage(int damage)
     {
-            
     }
 }
 

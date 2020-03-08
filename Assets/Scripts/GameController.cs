@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using DefaultNamespace;
 using Models;
 using SO;
 using UniRx;
@@ -27,6 +25,7 @@ public class GameController : MonoBehaviour
     private LocalSaveController _localSaveController;
     private GameSaveInfo _gameSaveInfo = new GameSaveInfo();
     private RocketController.Factory _rocketFactory;
+    public List<CelestialObject> CelestialObjects => _celestialObjects;
 
     [Inject]
     void Construct(
@@ -36,7 +35,7 @@ public class GameController : MonoBehaviour
         RocketAmmoPanel ammoPanel,
         LocalSaveController localSaveController,
         RocketController.Factory rocketFactory
-        )
+    )
     {
         _planetFactory = planetFactory;
         _rocketFactory = rocketFactory;
@@ -45,18 +44,35 @@ public class GameController : MonoBehaviour
         _ammoPanel = ammoPanel;
         _localSaveController = localSaveController;
     }
+
     void Start()
     {
         ConfigureInput();
         Application.targetFrameRate = 60;
     }
 
-    private void Update()
+    void Update()
     {
         if (currentGameState == GameState.Running)
         {
             _aiSystem.MakeDecisions();
         }
+    }
+
+    #region PUBLIC METHODS
+
+    public void StartNewGame()
+    {
+        CreateRandomizedState();
+        ApplyStates();
+        ResumeGame();
+        _aiSystem = new AISystem(_sun, _enemies);
+    }
+
+    public void ResumeGame()
+    {
+        Time.timeScale = 1;
+        currentGameState = GameState.Running;
     }
 
     public void DisposePools()
@@ -76,21 +92,64 @@ public class GameController : MonoBehaviour
             }
         }
     }
-    public void StartNewGame()
+
+    public bool CheckSaveFileExists()
     {
-        //CreatePlayer();
-        CreateEnemies();
-        ResumeGame();
-        _aiSystem = new AISystem(_sun, _playerPlanet, _enemies);
+        return _localSaveController.IsSaveFileExists();
     }
 
-    private void CreateEnemies()
+    public void LoadGame()
+    {
+        if (_playerPlanet != null)
+        {
+            DisposePools();
+        }
+
+        _localSaveController.LoadSaveFile(delegate(GameSaveInfo info)
+        {
+            _gameSaveInfo = info;
+            _gameSaveInfo.PrepareForDeserialize();
+            ApplyStates();
+            foreach (var rocketState in _gameSaveInfo.RocketStates)
+            {
+                var rocket = _rocketFactory.Create();
+                rocket.Configure(rocketState);
+            }
+
+            ResumeGame();
+            if (_aiSystem == null)
+            {
+                _aiSystem = new AISystem(_sun, _enemies);
+            }
+        }, Debug.LogError);
+    }
+
+    public void SaveGame()
+    {
+        _gameSaveInfo.RocketStates.Clear();
+
+        foreach (Transform rocketTr in _rocketPoolRoot)
+        {
+            if (rocketTr.gameObject.activeSelf)
+            {
+                _gameSaveInfo.RocketStates.Add(rocketTr.GetComponent<RocketController>().GetCurrentState());
+            }
+        }
+
+        _gameSaveInfo.PrepareForSerialize();
+        var json = JsonUtility.ToJson(_gameSaveInfo);
+        _localSaveController.SaveProgress(json);
+    }
+
+    #endregion
+
+    #region PRIVATE METHODS
+
+    private void CreateRandomizedState()
     {
         var playerIndex = Random.Range(0, _gameSettings.initialPlanetAmount);
         float previousOrbit = _gameSettings.MinimumOrbitRadius;
-        
         _gameSaveInfo.PlanetStates.Clear();
-        
         for (int i = 0; i < _gameSettings.initialPlanetAmount; i++)
         {
             var randomPlanetSetting = new SettingsSO.PlanetSettings();
@@ -102,22 +161,18 @@ public class GameController : MonoBehaviour
                 _gameSettings.SolarAngularVelocityMax);
             randomPlanetSetting.selfRotationVelocity = Random.Range(_gameSettings.SelfRotationVelocityMin,
                 _gameSettings.SelfRotationVelocityMax);
-
-            var planetState = new PlanetState();
-            planetState.settings = randomPlanetSetting;
-            planetState.hp = _gameSettings.initialPlanetHP;
+            var planetState = new PlanetState {settings = randomPlanetSetting, hp = _gameSettings.initialPlanetHP};
             var isPlayer = playerIndex == i;
             planetState.isPlayer = isPlayer;
             planetState.currentAngleToSun = Random.Range(0, Mathf.PI * 2);
-            planetState.color = new Color(Random.Range(0.2f,1f),Random.Range(0.2f,1f),Random.Range(0.2f,1f));
+            planetState.color = new Color(Random.Range(0.2f, 1f), Random.Range(0.2f, 1f), Random.Range(0.2f, 1f));
             foreach (var rocket in _rocketSettings)
             {
                 planetState.rocketAmmo.Add(rocket.rocketType, Random.Range(rocket.minAmmo, rocket.maxAmmo));
             }
-            _gameSaveInfo.PlanetStates.Add(planetState);
 
+            _gameSaveInfo.PlanetStates.Add(planetState);
         }
-        ApplyStates();
     }
 
     private void ApplyStates()
@@ -138,13 +193,7 @@ public class GameController : MonoBehaviour
             }
             else
             {
-                planet.onDieEvent = delegate
-                {
-                    if (_enemies.All(enemy => enemy.IsDead))
-                    {
-                        GameWon();
-                    }
-                };
+                SetEnemyOnDieListener(planet);
                 _enemies.Add(planet);
             }
 
@@ -153,28 +202,40 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public List<CelestialObject> GetAllCelestialObjects()
+    private void SetEnemyOnDieListener(PlanetController planet)
     {
-        return _celestialObjects;
+        planet.onDieEvent = delegate
+        {
+            if (_enemies.All(enemy => enemy.IsDead))
+            {
+                GameWon();
+            }
+        };
     }
+
     private void ConfigureInput()
     {
-        Observable.EveryUpdate().Where(_ => Input.GetKeyDown(KeyCode.Space) && currentGameState == GameState.Running).Subscribe(_ =>
-        {
-            _playerPlanet.Shoot();
-            _ammoPanel.SetRocketAmmo(_playerPlanet.GetCurrentRocketSettings().rocketType, _playerPlanet.GetCurrentAmmo());
-            if (_playerPlanet.GetCurrentAmmo() <= 0)
+        Observable.EveryUpdate().Where(_ => Input.GetKeyDown(KeyCode.Space) && currentGameState == GameState.Running)
+            .Subscribe(_ =>
             {
-                SwitchToNextNonEmptyAmmo();
-            }
-            
-        }).AddTo(this);
+                _playerPlanet.Shoot();
+                _ammoPanel.SetRocketAmmo(_playerPlanet.GetCurrentRocketSettings().rocketType,
+                    _playerPlanet.GetCurrentAmmo());
+                if (_playerPlanet.GetCurrentAmmo() <= 0)
+                {
+                    SwitchToNextNonEmptyAmmo();
+                }
+            }).AddTo(this);
+
         Observable.EveryUpdate().Where(_ => (Input.GetKeyDown(KeyCode.LeftShift) ||
-                                            Input.GetKeyDown(KeyCode.RightShift)) && currentGameState == GameState.Running).Subscribe(_ =>
+                                             Input.GetKeyDown(KeyCode.RightShift)) &&
+                                            currentGameState == GameState.Running).Subscribe(_ =>
         {
             SwitchToNextNonEmptyAmmo();
         }).AddTo(this);
-        Observable.EveryUpdate().Where(_ => Input.GetKeyDown(KeyCode.Escape) && currentGameState == GameState.Running).Subscribe(_ =>
+
+        Observable.EveryUpdate().Where(_ => Input.GetKeyDown(KeyCode.Escape) && currentGameState == GameState.Running)
+            .Subscribe(_ =>
             {
                 currentGameState = GameState.Paused;
                 Time.timeScale = 0;
@@ -192,87 +253,37 @@ public class GameController : MonoBehaviour
             {
                 rocketTypeInt = 0;
             }
+
             _playerPlanet.SetRocketType((RocketType) rocketTypeInt);
             if (_playerPlanet.GetCurrentAmmo() <= 0)
             {
                 continue;
             }
+
             _ammoPanel.SetCurrentRocketType((RocketType) rocketTypeInt);
             break;
         }
     }
 
-    public void ResumeGame()
+    private void GameOver()
     {
-        Time.timeScale = 1;
-        currentGameState = GameState.Running;
-    }
-
-    public void SaveGame()
-    {
-        _gameSaveInfo.RocketStates.Clear();
-       
-        foreach (Transform rocketTr in _rocketPoolRoot)
-        {
-            if (rocketTr.gameObject.activeSelf)
-            {
-                _gameSaveInfo.RocketStates.Add(rocketTr.GetComponent<RocketController>().GetCurrentState());
-            }
-        }
-        _gameSaveInfo.PrepareForSerialize();
-        var json = JsonUtility.ToJson(_gameSaveInfo);
-        _localSaveController.SaveProgress(json);
-    }
-
-    public void GameOver()
-    {
-        Time.timeScale =0;
+        Time.timeScale = 0;
         currentGameState = GameState.Finished;
         _mainMenuController.Show(GameState.Finished);
     }
-    
-    public void GameWon()
+
+    private void GameWon()
     {
-        Time.timeScale =0;
+        Time.timeScale = 0;
         currentGameState = GameState.YouWin;
         _mainMenuController.Show(GameState.YouWin);
     }
 
-    public bool CheckSaveFileExists()
-    {
-        return _localSaveController.IsSaveFileExists();
-    }
-
-    public void LoadGame()
-    {
-        if (_playerPlanet != null)
-        {
-            DisposePools();
-        }
-        _localSaveController.LoadSaveFile(delegate(GameSaveInfo info)
-        {
-            _gameSaveInfo = info;
-            _gameSaveInfo.PrepareForDeserialize();
-            ApplyStates();
-            foreach (var rocketState in _gameSaveInfo.RocketStates)
-            {
-                var rocket = _rocketFactory.Create();
-                rocket.Configure(rocketState);
-            }
-            ResumeGame();
-            if (_aiSystem == null)
-            {
-                _aiSystem = new AISystem(_sun, _playerPlanet, _enemies);
-            }
-
-            
-            
-        }, Debug.LogError);
-        
-    }
+    #endregion
 }
 
-public enum GameState{
+public enum GameState
+{
     MainMenu,
     Running,
     Paused,

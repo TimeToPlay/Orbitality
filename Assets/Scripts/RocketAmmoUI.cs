@@ -1,15 +1,14 @@
 ﻿using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class RocketAmmoUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI ammoText;
     [SerializeField] private GameObject selectedBorder;
 
-    public void SelectEnabled(bool enabled)
+    public void SelectEnabled(bool b)
     {
-        selectedBorder.SetActive(enabled);
+        selectedBorder.SetActive(b);
     }
 
     public void SetAmmo(int ammo)

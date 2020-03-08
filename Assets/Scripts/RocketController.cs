@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using Models;
 using SO;
-using UniRx;
-using UniRx.Triggers;
 using UnityEngine;
 using Zenject;
 
@@ -20,25 +18,18 @@ public class RocketController : MonoBehaviour, IPoolable<IMemoryPool>, IDamageRe
     private RocketState _rocketState = new RocketState();
 
     [Inject]
-    void Construct(List<SettingsSO.RocketSettings> rocketSettings,
-        GameController gameController)
+    void Construct(
+        List<SettingsSO.RocketSettings> rocketSettings,
+        GameController gameController
+    )
     {
         _rocketSettings = rocketSettings;
         _gameController = gameController;
     }
 
-    private void Start()
-    {
-        
-        this.OnCollisionEnterAsObservable().Subscribe(collision =>
-        {
-            Debug.Log("collision " + collision.collider.gameObject.name);
-        }).AddTo(this);
-    }
-
     public void OnDespawned()
     {
-        transform.position = new Vector3(-1000,-1000);
+        transform.position = new Vector3(-1000, -1000);
     }
 
     public void OnSpawned(IMemoryPool pool)
@@ -48,16 +39,16 @@ public class RocketController : MonoBehaviour, IPoolable<IMemoryPool>, IDamageRe
 
     private void ChangeColor(Color color)
     {
-        foreach (var renderer in GetComponentsInChildren<MeshRenderer>())
+        foreach (var rend in GetComponentsInChildren<MeshRenderer>())
         {
-           renderer.material.color = color;
+            rend.material.color = color;
         }
     }
 
     private void FixedUpdate()
     {
         _rigidbody2D.AddForce(transform.up * (_currentSettings.acceleration * Time.fixedDeltaTime));
-        foreach (var celestialObject in _gameController.GetAllCelestialObjects())
+        foreach (var celestialObject in _gameController.CelestialObjects)
         {
             var celestialObjPos = celestialObject.transform.position;
             var position = transform.position;
@@ -84,7 +75,7 @@ public class RocketController : MonoBehaviour, IPoolable<IMemoryPool>, IDamageRe
         _rocketState.rotationZ = transform.rotation.eulerAngles.z;
         if (!_renderer.isVisible)
         {
-           Dispose();         
+            Dispose();
         }
     }
 
@@ -92,7 +83,7 @@ public class RocketController : MonoBehaviour, IPoolable<IMemoryPool>, IDamageRe
     {
         _rocketState = state;
         transform.position = new Vector3(_rocketState.posX, _rocketState.posY);
-        transform.rotation = Quaternion.Euler(0,0, _rocketState.rotationZ);
+        transform.rotation = Quaternion.Euler(0, 0, _rocketState.rotationZ);
         _currentSettings = _rocketSettings.Find(setting => setting.rocketType == _rocketState.GetRocketType());
         _rigidbody2D.rotation = 0;
         _rigidbody2D.velocity = transform.up * _rocketState.velocity;
@@ -110,11 +101,6 @@ public class RocketController : MonoBehaviour, IPoolable<IMemoryPool>, IDamageRe
         }
     }
 
-    public void SetOnDisposeListener(Action onDispose)
-    {
-        _onDisposeListener = onDispose;
-    }
-
     private void OnCollisionEnter2D(Collision2D other)
     {
         var damageReceiver = other.gameObject.GetComponent<IDamageReceiver>();
@@ -122,7 +108,9 @@ public class RocketController : MonoBehaviour, IPoolable<IMemoryPool>, IDamageRe
         if (isActiveAndEnabled) Dispose();
     }
 
-    public class Factory : PlaceholderFactory<RocketController>{}
+    public class Factory : PlaceholderFactory<RocketController>
+    {
+    }
 
     public void ReceiveDamage(int damage)
     {

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UniRx;
 using UnityEngine;
@@ -16,7 +14,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI statusText;
     private CanvasGroup _canvasGroup;
     private GameController _gameController;
-    private GameState currentGameState = GameState.MainMenu;
+    private GameState _currentGameState = GameState.MainMenu;
 
     [Inject]
     void Construct(GameController gameController)
@@ -30,7 +28,7 @@ public class MainMenuController : MonoBehaviour
         saveGameButton.gameObject.SetActive(false);
         newGameButton.OnClickAsObservable().Subscribe(_ =>
         {
-            if (currentGameState != GameState.MainMenu)
+            if (_currentGameState != GameState.MainMenu)
             {
                 _gameController.DisposePools();
             }
@@ -106,7 +104,7 @@ public class MainMenuController : MonoBehaviour
                 throw new ArgumentOutOfRangeException(nameof(gameState), gameState, null);
         }
 
-        currentGameState = gameState;
+        _currentGameState = gameState;
         _canvasGroup.alpha = 1;
         _canvasGroup.blocksRaycasts = true;
     }

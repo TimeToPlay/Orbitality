@@ -49,7 +49,6 @@ public class LocalStorageHelper
         {
             StreamWriter writer = new StreamWriter(path, false);
             writer.WriteLine(s);
-            Debug.Log("written file");
             writer.Close();
         });
         Debug.Log("save file done");

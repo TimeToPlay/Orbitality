@@ -4,50 +4,47 @@ using Models;
 using UniRx;
 using UnityEngine;
 
-namespace DefaultNamespace
+public class LocalSaveController
 {
-    public class LocalSaveController
+    private string gameDataFileName = "saves.json";
+    private string saveFileName = "saves";
+    private LocalStorageHelper _localStorageHelper;
+
+    public LocalSaveController(LocalStorageHelper localStorageHelper)
     {
-        private string gameDataFileName = "saves.json";
-        private string saveFileName = "saves";
-        private LocalStorageHelper _localStorageHelper;
+        _localStorageHelper = localStorageHelper;
 
-        public LocalSaveController(LocalStorageHelper localStorageHelper)
-        {
-            _localStorageHelper = localStorageHelper;
-
-        }
-        public void LoadSaveFile(Action<GameSaveInfo> onSuccess, Action<string> onFailure)
-        {
-            MainThreadDispatcher.StartUpdateMicroCoroutine(
-                _localStorageHelper.ReaderStringFileAsync(GetCurrentSavePath(),
-                    delegate(string s)
+    }
+    public void LoadSaveFile(Action<GameSaveInfo> onSuccess, Action<string> onFailure)
+    {
+        MainThreadDispatcher.StartUpdateMicroCoroutine(
+            _localStorageHelper.ReaderStringFileAsync(GetCurrentSavePath(),
+                delegate(string s)
+                {
+                    if (s == "")
                     {
-                        if (s == "")
-                        {
-                            onFailure("empty save file");
-                            return;
-                        }
+                        onFailure("empty save file");
+                        return;
+                    }
 
-                        var saveStoryModel = JsonUtility.FromJson<GameSaveInfo>(s);
-                        onSuccess(saveStoryModel);
-                    }, onFailure));
-        }
+                    var saveStoryModel = JsonUtility.FromJson<GameSaveInfo>(s);
+                    onSuccess(saveStoryModel);
+                }, onFailure));
+    }
         
-        public void SaveProgress(string jsonToSave)
-        {
-            var path = GetCurrentSavePath();
-            MainThreadDispatcher.StartUpdateMicroCoroutine(_localStorageHelper.WriteString(path, jsonToSave));
-        }
+    public void SaveProgress(string jsonToSave)
+    {
+        var path = GetCurrentSavePath();
+        MainThreadDispatcher.StartUpdateMicroCoroutine(_localStorageHelper.WriteString(path, jsonToSave));
+    }
         
-        private string GetCurrentSavePath()
-        {
-            return Path.Combine(Application.persistentDataPath, saveFileName);
-        }
+    private string GetCurrentSavePath()
+    {
+        return Path.Combine(Application.persistentDataPath, saveFileName);
+    }
 
-        public bool IsSaveFileExists()
-        {
-            return File.Exists(GetCurrentSavePath());
-        }
+    public bool IsSaveFileExists()
+    {
+        return File.Exists(GetCurrentSavePath());
     }
 }

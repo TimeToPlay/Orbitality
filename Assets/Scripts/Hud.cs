@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using SO;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
@@ -19,9 +15,9 @@ public class Hud : MonoBehaviour, IPoolable<IMemoryPool>
     private Camera _camera;
 
     [Inject]
-    void Construct(Camera camera)
+    void Construct(Camera cam)
     {
-        _camera = camera;
+        _camera = cam;
     }
     private void Start()
     {

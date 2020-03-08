@@ -1,5 +1,4 @@
-﻿using DefaultNamespace;
-using Models;
+﻿using Models;
 using SO;
 using UnityEngine;
 using Zenject;
