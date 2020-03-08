@@ -5,6 +5,7 @@ using Models;
 using SO;
 using UnityEngine;
 using UnityEngine.UI;
+using Utils;
 using Zenject;
 using Random = UnityEngine.Random;
 
@@ -26,6 +27,9 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
     private bool isDead;
     [SerializeField] private LineRenderer _lineRenderer;
     public const float ROCKET_START_VELOCITY = 27;
+    public Action onDieEvent;
+
+    public bool IsDead => isDead;
 
     [Inject]
     void Construct(RocketController.Factory rocketFactory,
@@ -103,7 +107,14 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
         transform.localScale = new Vector3(state.settings.planetScale, state.settings.planetScale,state.settings.planetScale);
         _currentHud = _hudFactory.Create();
         currentRocketSettings = _rocketSettingsList[0];
-        _currentHud.Configure("Wayko", state.isPlayer, state.hp);
+        isDead = false;
+        currentState.nickname = state.nickname;
+        if (string.IsNullOrEmpty(state.nickname))
+        {
+            var nickname = NickGenerator.GetRandomNickname();
+            currentState.nickname = nickname;
+        }
+        _currentHud.Configure(currentState.nickname, state.isPlayer, state.hp, state.hp);
     }
 
     public override float GetGravityModifier()
@@ -124,6 +135,7 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
     private void Die()
     {
         isDead = true;
+        onDieEvent?.Invoke();
         Dispose();
     }
 
@@ -154,6 +166,7 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
 
     public void Dispose()
     {
+        if (!isActiveAndEnabled) return;
         StopAllCoroutines();
         isCooldown = false;
         _currentHud.Despawn();

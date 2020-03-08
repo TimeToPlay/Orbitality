@@ -28,12 +28,14 @@ public class Hud : MonoBehaviour, IPoolable<IMemoryPool>
         _rectTransform = GetComponent<RectTransform>();
     }
 
-    public void Configure(string nickname, bool isPlayer, int maxHp)
+    public void Configure(string nickname, bool isPlayer, int maxHp, int currentHP)
     {
         nicknameText.text = nickname;
         hpBar.color = isPlayer ? Color.green : Color.red;
-        if (!isPlayer) cooldownBar.gameObject.SetActive(false);
+        cooldownBar.gameObject.SetActive(isPlayer);
+        cooldownBar.fillAmount = 0;
         _maxHp = maxHp;
+        SetNewHp(currentHP);
     }
 
     public void SetNewHp(int hp)

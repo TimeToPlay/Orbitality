@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using DefaultNamespace;
 using Models;
 using SO;
@@ -128,6 +129,7 @@ public class GameController : MonoBehaviour
             if (planetState.isPlayer)
             {
                 _playerPlanet = planet;
+                _playerPlanet.onDieEvent = GameOver;
                 foreach (var key in planetState.rocketAmmo.Keys)
                 {
                     _ammoPanel.SetRocketAmmo(key, planetState.rocketAmmo[key]);
@@ -135,6 +137,13 @@ public class GameController : MonoBehaviour
             }
             else
             {
+                planet.onDieEvent = delegate
+                {
+                    if (_enemies.All(enemy => enemy.IsDead))
+                    {
+                        GameWon();
+                    }
+                };
                 _enemies.Add(planet);
             }
 
@@ -214,6 +223,20 @@ public class GameController : MonoBehaviour
         _localSaveController.SaveProgress(json);
     }
 
+    public void GameOver()
+    {
+        Time.timeScale =0;
+        currentGameState = GameState.Finished;
+        _mainMenuController.Show(GameState.Finished);
+    }
+    
+    public void GameWon()
+    {
+        Time.timeScale =0;
+        currentGameState = GameState.YouWin;
+        _mainMenuController.Show(GameState.YouWin);
+    }
+
     public bool CheckSaveFileExists()
     {
         return _localSaveController.IsSaveFileExists();
@@ -252,5 +275,6 @@ public enum GameState{
     MainMenu,
     Running,
     Paused,
-    Finished
+    Finished,
+    YouWin
 }

@@ -94,6 +94,12 @@ public class MainMenuController : MonoBehaviour
             case GameState.Finished:
                 statusText.text = "GAME OVER";
                 saveGameButton.gameObject.SetActive(false);
+                continuerButton.gameObject.SetActive(false);
+                break;
+            case GameState.YouWin:
+                statusText.text = "VICTORY";
+                saveGameButton.gameObject.SetActive(false);
+                continuerButton.gameObject.SetActive(false);
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(gameState), gameState, null);

@@ -13,6 +13,7 @@ namespace Models
         public SettingsSO.PlanetSettings settings;
         public bool isPlayer;
         public List<AmmoInfo> ammoInfoList;
+        public string nickname;
 
         public void PrepareForSerialize()
         {
