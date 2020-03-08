@@ -16,7 +16,6 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
     private float currentAngleToSun = 0;
     private RocketController.Factory _rocketFactory;
     [SerializeField] private Transform muzzleTransform;
-    private SettingsSO.GameSettings _gameSetttings;
     private IMemoryPool _pool;
     private Hud.Factory _hudFactory;
     private Hud _currentHud;
@@ -25,7 +24,6 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
     private SettingsSO.RocketSettings currentRocketSettings;
     private List<SettingsSO.RocketSettings> _rocketSettingsList;
     private bool isDead;
-    [SerializeField] private LineRenderer _lineRenderer;
     public const float ROCKET_START_VELOCITY = 27;
     public Action onDieEvent;
 
@@ -33,12 +31,10 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
 
     [Inject]
     void Construct(RocketController.Factory rocketFactory,
-        SettingsSO.GameSettings gameSettings,
         Hud.Factory hudFactory,
         List<SettingsSO.RocketSettings> rocketSettingList)
     {
         _rocketFactory = rocketFactory;
-        _gameSetttings = gameSettings;
         _hudFactory = hudFactory;
         _rocketSettingsList = rocketSettingList;
         currentRocketSettings = rocketSettingList[0];
@@ -109,6 +105,7 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
         currentRocketSettings = _rocketSettingsList[0];
         isDead = false;
         currentState.nickname = state.nickname;
+        GetComponent<MeshRenderer>().material.color = state.color;
         if (string.IsNullOrEmpty(state.nickname))
         {
             var nickname = NickGenerator.GetRandomNickname();

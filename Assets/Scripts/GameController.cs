@@ -109,6 +109,7 @@ public class GameController : MonoBehaviour
             var isPlayer = playerIndex == i;
             planetState.isPlayer = isPlayer;
             planetState.currentAngleToSun = Random.Range(0, Mathf.PI * 2);
+            planetState.color = new Color(Random.Range(0.2f,1f),Random.Range(0.2f,1f),Random.Range(0.2f,1f));
             foreach (var rocket in _rocketSettings)
             {
                 planetState.rocketAmmo.Add(rocket.rocketType, Random.Range(rocket.minAmmo, rocket.maxAmmo));

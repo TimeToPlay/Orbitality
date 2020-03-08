@@ -14,6 +14,7 @@ namespace Models
         public bool isPlayer;
         public List<AmmoInfo> ammoInfoList;
         public string nickname;
+        public SerializableColor color;
 
         public void PrepareForSerialize()
         {

@@ -84,6 +84,7 @@ public class MainMenuController : MonoBehaviour
                 saveGameButton.gameObject.SetActive(true);
                 saveGameButton.interactable = true;
                 CheckLoadButton();
+                continuerButton.gameObject.SetActive(true);
                 continuerButton.onClick.RemoveAllListeners();
                 continuerButton.onClick.AddListener(delegate
                 {
