@@ -21,19 +21,26 @@ MonoBehaviour:
     SolarAngularVelocityMax: 0.3
     SelfRotationVelocityMin: 200
     SelfRotationVelocityMax: 300
+    initialPlanetHP: 500
   rocketSettingList:
   - rocketType: 0
-    damage: 10
+    damage: 20
     acceleration: 600
-    cooldown: 10
+    cooldown: 0.5
+    minAmmo: 100
+    maxAmmo: 200
   - rocketType: 1
-    damage: 2
+    damage: 10
     acceleration: 1200
-    cooldown: 2
+    cooldown: 0.1
+    minAmmo: 200
+    maxAmmo: 400
   - rocketType: 2
     damage: 50
     acceleration: 400
-    cooldown: 30
+    cooldown: 1
+    minAmmo: 50
+    maxAmmo: 100
   playerPlanetSettings:
     clockwise: 1
     planetScale: 4

@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 4107858049458205539}
   m_Layer: 0
   m_Name: Rocket
-  m_TagString: Untagged
+  m_TagString: Rocket
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -47,7 +47,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _rigidbody2D: {fileID: 3630771406938893466}
-  rendererTransform: {fileID: 2913711456647601716}
+  _pivotTransform: {fileID: 2913711456647601716}
+  _renderer: {fileID: 4767643031223441040}
 --- !u!50 &3630771406938893466
 Rigidbody2D:
   serializedVersion: 4

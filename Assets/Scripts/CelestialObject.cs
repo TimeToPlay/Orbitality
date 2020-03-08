@@ -1,13 +1,20 @@
 ﻿using UnityEngine;
 
-namespace DefaultNamespace
+public class CelestialObject : MonoBehaviour, IDamageReceiver
 {
-    public class CelestialObject : MonoBehaviour
+    [SerializeField] private float mass;
+    public virtual float GetGravityModifier()
     {
-        [SerializeField] private float mass;
-        public virtual float GetGravityModifier()
-        {
-            return mass;
-        }
+        return mass;
     }
+
+    public virtual void ReceiveDamage(int damage)
+    {
+            
+    }
+}
+
+public interface IDamageReceiver
+{
+    void ReceiveDamage(int damage);
 }

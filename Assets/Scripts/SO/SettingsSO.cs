@@ -16,9 +16,11 @@ namespace SO
         public class RocketSettings
         {
             public RocketType rocketType;
-            public float damage;
+            public int damage;
             public float acceleration;
             public float cooldown;
+            public int minAmmo;
+            public int maxAmmo;
         }
         [Serializable]
         public class GameSettings
@@ -31,6 +33,7 @@ namespace SO
             public float SolarAngularVelocityMax = 0.3f;
             public float SelfRotationVelocityMin = 200;
             public float SelfRotationVelocityMax = 300;
+            public int initialPlanetHP;
         }
 
         [Serializable]
