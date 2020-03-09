@@ -1,11 +1,11 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Utils
 {
     public class NickGenerator
     {
-        private static string[] nicknames = {
+        private static string[] nicknames =
+        {
             "Anheuser", "Jolly Roger", "Belch", "Leonidas", "Big Mac", "ManBearPig", "Bob Zombie", "Master Chief",
             "Boomhauer", "Mr. Clean", "Braveheart", "Mustache", "Brundon", "O'Doyle", "Captain Crunch", "Pablo",
             "Chewbacca", "Popeye", "Chubs", "Pork Chop", "Chum", "Rufio", "Derp", "Rumplestiltskin", "Django", "Snoopy",

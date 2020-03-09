@@ -13,8 +13,8 @@ public class LocalSaveController
     public LocalSaveController(LocalStorageHelper localStorageHelper)
     {
         _localStorageHelper = localStorageHelper;
-
     }
+
     public void LoadSaveFile(Action<GameSaveInfo> onSuccess, Action<string> onFailure)
     {
         MainThreadDispatcher.StartUpdateMicroCoroutine(
@@ -31,13 +31,13 @@ public class LocalSaveController
                     onSuccess(saveStoryModel);
                 }, onFailure));
     }
-        
+
     public void SaveProgress(string jsonToSave)
     {
         var path = GetCurrentSavePath();
         MainThreadDispatcher.StartUpdateMicroCoroutine(_localStorageHelper.WriteString(path, jsonToSave));
     }
-        
+
     private string GetCurrentSavePath()
     {
         return Path.Combine(Application.persistentDataPath, saveFileName);

@@ -8,11 +8,12 @@ public class MainSceneInstaller : MonoInstaller
     [SerializeField] private RocketController _rocketPrefab;
     [SerializeField] private PlanetController _planetPrefab;
     [SerializeField] private Hud _hudPrefab;
-    
+
 
     [SerializeField] private Transform RocketsRoot;
     [SerializeField] private Transform PlanetRoot;
     [SerializeField] private Transform HudRoot;
+
     public override void InstallBindings()
     {
         Container.Bind<LocalStorageHelper>().AsSingle().NonLazy();
@@ -26,13 +27,13 @@ public class MainSceneInstaller : MonoInstaller
                 .WithInitialSize(40)
                 .FromComponentInNewPrefab(_rocketPrefab)
                 .UnderTransform(RocketsRoot));
-        
+
         Container.BindFactory<PlanetState, PlanetController, PlanetController.Factory>()
             .FromPoolableMemoryPool<PlanetState, PlanetController, PlanetControllerPool>(poolBinder => poolBinder
                 .WithInitialSize(10)
                 .FromComponentInNewPrefab(_planetPrefab)
                 .UnderTransform(PlanetRoot));
-        
+
         Container.BindFactory<Hud, Hud.Factory>()
             .FromPoolableMemoryPool<Hud, HudPool>(poolBinder => poolBinder
                 .WithInitialSize(10)
@@ -40,6 +41,15 @@ public class MainSceneInstaller : MonoInstaller
                 .UnderTransform(HudRoot));
     }
 }
-class RocketControllerPool : MonoPoolableMemoryPool<IMemoryPool, RocketController>{}
-class PlanetControllerPool : MonoPoolableMemoryPool<PlanetState, IMemoryPool, PlanetController>{}
-class HudPool : MonoPoolableMemoryPool<IMemoryPool, Hud>{}
+
+class RocketControllerPool : MonoPoolableMemoryPool<IMemoryPool, RocketController>
+{
+}
+
+class PlanetControllerPool : MonoPoolableMemoryPool<PlanetState, IMemoryPool, PlanetController>
+{
+}
+
+class HudPool : MonoPoolableMemoryPool<IMemoryPool, Hud>
+{
+}

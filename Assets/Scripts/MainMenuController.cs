@@ -21,7 +21,7 @@ public class MainMenuController : MonoBehaviour
     {
         _gameController = gameController;
     }
-    
+
     void Start()
     {
         _canvasGroup = GetComponent<CanvasGroup>();

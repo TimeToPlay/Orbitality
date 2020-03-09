@@ -19,6 +19,7 @@ public class Hud : MonoBehaviour, IPoolable<IMemoryPool>
     {
         _camera = cam;
     }
+
     private void Start()
     {
         _rectTransform = GetComponent<RectTransform>();
@@ -41,8 +42,9 @@ public class Hud : MonoBehaviour, IPoolable<IMemoryPool>
 
     public void TransformWorldPosition(Vector3 worldPosition)
     {
-         _rectTransform.position = _camera.WorldToScreenPoint(worldPosition);
+        _rectTransform.position = _camera.WorldToScreenPoint(worldPosition);
     }
+
     public void OnDespawned()
     {
     }
@@ -51,7 +53,10 @@ public class Hud : MonoBehaviour, IPoolable<IMemoryPool>
     {
         _pool = pool;
     }
-    public class Factory : PlaceholderFactory<Hud>{}
+
+    public class Factory : PlaceholderFactory<Hud>
+    {
+    }
 
     public void Despawn()
     {

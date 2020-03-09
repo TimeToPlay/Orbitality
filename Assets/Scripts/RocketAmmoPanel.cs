@@ -2,7 +2,7 @@
 using SO;
 using UnityEngine;
 
-public class RocketAmmoPanel: MonoBehaviour
+public class RocketAmmoPanel : MonoBehaviour
 {
     [SerializeField] private RocketAmmoUI normalRocket;
     [SerializeField] private RocketAmmoUI fastRocket;

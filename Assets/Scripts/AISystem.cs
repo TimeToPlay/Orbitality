@@ -23,17 +23,18 @@ public class AISystem
             var trajectory = CalculateForecastTrajectory(_sun, enemy);
             for (int i = 1; i < trajectory.Length; i++)
             {
-                var hit2D = Physics2D.Raycast(trajectory[i-1], (trajectory[i] - trajectory[i-1]).normalized);
+                var hit2D = Physics2D.Raycast(trajectory[i - 1], (trajectory[i] - trajectory[i - 1]).normalized);
                 if (hit2D.collider)
                 {
                     if (hit2D.collider.gameObject.CompareTag("Sun"))
                     {
                         break;
                     }
+
                     if (hit2D.collider.gameObject.CompareTag("Planet"))
                     {
                         ChooseRocketType(enemy, hit2D.collider.transform);
-                        Observable.TimerFrame(Random.Range(0,5)).Subscribe(_ => enemy.Shoot());
+                        Observable.TimerFrame(Random.Range(0, 5)).Subscribe(_ => enemy.Shoot());
                     }
                 }
             }
@@ -46,7 +47,8 @@ public class AISystem
         if (dist > enemy.GetOrbit())
         {
             enemy.SetRocketType(RocketType.Fast);
-        } else if (dist < 15)
+        }
+        else if (dist < 15)
         {
             enemy.SetRocketType(RocketType.Deadly);
         }
@@ -54,9 +56,10 @@ public class AISystem
         {
             enemy.SetRocketType(RocketType.Normal);
         }
+
         SwitchToNextNonEmptyAmmo(enemy);
     }
-        
+
     private void SwitchToNextNonEmptyAmmo(PlanetController planet)
     {
         if (planet.GetCurrentAmmo() > 0) return;
@@ -68,33 +71,45 @@ public class AISystem
             {
                 rocketTypeInt = 0;
             }
+
             planet.SetRocketType((RocketType) rocketTypeInt);
             if (planet.GetCurrentAmmo() <= 0)
             {
                 continue;
             }
+
             break;
         }
     }
 
+    #region BLACK MAGIC FUCKERY
+
+    //todo rewrite later
     public Vector3[] CalculateForecastTrajectory(CelestialObject sun, PlanetController planetController)
     {
-        Vector3[] positions = new Vector3[100];
+        var trajectoryPointCount = 100;
+        Vector3[] positions = new Vector3[trajectoryPointCount];
         positions[0] = planetController.GetMuzzle().position;
         positions[1] = planetController.GetMuzzle().position + planetController.transform.up;
         var time = 0f;
-        for (int i = 2; i < 100; i++)
+        var expectedDeltaTime = 0.016f;
+        for (int i = 2; i < trajectoryPointCount; i++)
         {
             var dir = (positions[i - 1] - positions[i - 2]).normalized;
             var sunPosition = sun.transform.position;
-            var gravityPowerMagnitude = sun.GetGravityModifier() / Mathf.Pow(Vector3.Distance(sunPosition, positions[i-1]), 2);
-            time += 0.016f;
-            var speed = PlanetController.ROCKET_START_VELOCITY + planetController.GetCurrentRocketSettings().acceleration * time;
-            var gravityPower = (sunPosition - positions[i-1]).normalized * gravityPowerMagnitude;
+            var gravityPowerMagnitude =
+                sun.GetGravityModifier() / Mathf.Pow(Vector3.Distance(sunPosition, positions[i - 1]), 2);
+            time += expectedDeltaTime;
+            var speed = PlanetController.ROCKET_START_VELOCITY +
+                        planetController.GetCurrentRocketSettings().acceleration * time;
+            var gravityPower = (sunPosition - positions[i - 1]).normalized * gravityPowerMagnitude;
 
-            var delta = (dir * (speed) + gravityPower) * 0.016f;
+            var delta = (dir * (speed) + gravityPower) * expectedDeltaTime;
             positions[i] = positions[i - 1] + delta;
         }
+
         return positions;
     }
+
+    #endregion
 }

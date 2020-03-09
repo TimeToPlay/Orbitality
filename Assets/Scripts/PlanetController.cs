@@ -23,20 +23,24 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
     private bool _isDead;
     public const float ROCKET_START_VELOCITY = 27;
     public Action onDieEvent;
+    private SettingsSO.GameSettings _gameSettings;
 
     public bool IsDead => _isDead;
 
     [Inject]
     void Construct(RocketController.Factory rocketFactory,
         Hud.Factory hudFactory,
-        List<SettingsSO.RocketSettings> rocketSettingList
-        )
+        List<SettingsSO.RocketSettings> rocketSettingList,
+        SettingsSO.GameSettings gameSettings
+    )
     {
         _rocketFactory = rocketFactory;
         _hudFactory = hudFactory;
         _rocketSettingsList = rocketSettingList;
         _currentRocketSettings = rocketSettingList[0];
+        _gameSettings = gameSettings;
     }
+
     void Update()
     {
         var positionX = _planetState.settings.orbitRadius * Mathf.Cos(_currentAngleToSun);
@@ -64,6 +68,7 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
         _planetState.rocketAmmo[_currentRocketSettings.rocketType]--;
         StartCoroutine(StartCooldown());
     }
+
     public int GetCurrentAmmo()
     {
         return _planetState.rocketAmmo[_currentRocketSettings.rocketType];
@@ -85,11 +90,13 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
         _currentHud.SetCooldown(_cooldown / _currentRocketSettings.cooldown);
     }
 
-    public class Factory : PlaceholderFactory<PlanetState, PlanetController>{}
+    public class Factory : PlaceholderFactory<PlanetState, PlanetController>
+    {
+    }
 
     public void OnDespawned()
     {
-        transform.position = new Vector3(-1000,-1000,0);
+        transform.position = new Vector3(-1000, -1000, 0);
     }
 
     public void OnSpawned(PlanetState state, IMemoryPool pool)
@@ -97,7 +104,8 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
         _planetState = state;
         _pool = pool;
         _currentAngleToSun = state.currentAngleToSun;
-        transform.localScale = new Vector3(state.settings.planetScale, state.settings.planetScale,state.settings.planetScale);
+        transform.localScale = new Vector3(state.settings.planetScale, state.settings.planetScale,
+            state.settings.planetScale);
         _currentHud = _hudFactory.Create();
         _currentRocketSettings = _rocketSettingsList[0];
         _isDead = false;
@@ -108,7 +116,8 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
             var nickname = NickGenerator.GetRandomNickname();
             _planetState.nickname = nickname;
         }
-        _currentHud.Configure(_planetState.nickname, state.isPlayer, state.hp, state.hp);
+
+        _currentHud.Configure(_planetState.nickname, state.isPlayer, _gameSettings.initialPlanetHP, state.hp);
     }
 
     public override float GetGravityModifier()
@@ -152,6 +161,7 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
     {
         return _planetState.settings.orbitRadius;
     }
+
     public void Dispose()
     {
         if (!isActiveAndEnabled) return;
@@ -161,7 +171,3 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
         _pool.Despawn(this);
     }
 }
-
-
-
-

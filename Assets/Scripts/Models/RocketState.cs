@@ -14,7 +14,7 @@ namespace Models
 
         public RocketType GetRocketType()
         {
-            return (RocketType)Enum.Parse(typeof(RocketType), rocketType);
+            return (RocketType) Enum.Parse(typeof(RocketType), rocketType);
         }
     }
 }
