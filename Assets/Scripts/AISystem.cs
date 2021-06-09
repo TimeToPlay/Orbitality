@@ -1,18 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using Controllers;
 using SO;
 using UniRx;
 using UnityEngine;
+using Zenject;
 using Random = UnityEngine.Random;
 
 public class AISystem
 {
+    private const double DISTANCE_TO_SHOT_DEADLY_WEAPON = 15;
+    [Inject(Id = "sun")]
     private CelestialObject _sun;
-    private List<PlanetController> _enemies;
+    private List<PlanetViewController> _enemies;
 
-    public AISystem(CelestialObject sun, List<PlanetController> enemies)
+    public void RegisterEnemies(List<PlanetViewController> enemies)
     {
-        _sun = sun;
         _enemies = enemies;
     }
 
@@ -41,14 +44,14 @@ public class AISystem
         }
     }
 
-    private void ChooseRocketType(PlanetController enemy, Transform target)
+    private void ChooseRocketType(PlanetViewController enemy, Transform target)
     {
         var dist = Vector3.Distance(enemy.transform.position, target.position);
         if (dist > enemy.GetOrbit())
         {
             enemy.SetRocketType(RocketType.Fast);
         }
-        else if (dist < 15)
+        else if (dist < DISTANCE_TO_SHOT_DEADLY_WEAPON)
         {
             enemy.SetRocketType(RocketType.Deadly);
         }
@@ -60,7 +63,7 @@ public class AISystem
         SwitchToNextNonEmptyAmmo(enemy);
     }
 
-    private void SwitchToNextNonEmptyAmmo(PlanetController planet)
+    private void SwitchToNextNonEmptyAmmo(PlanetViewController planet)
     {
         if (planet.GetCurrentAmmo() > 0) return;
         var rocketTypeInt = (int) planet.GetCurrentRocketSettings().rocketType;
@@ -85,7 +88,7 @@ public class AISystem
     #region BLACK MAGIC FUCKERY
 
     //todo rewrite later
-    public Vector3[] CalculateForecastTrajectory(CelestialObject sun, PlanetController planetController)
+    public Vector3[] CalculateForecastTrajectory(CelestialObject sun, PlanetViewController planetController)
     {
         var trajectoryPointCount = 100;
         Vector3[] positions = new Vector3[trajectoryPointCount];
@@ -100,7 +103,7 @@ public class AISystem
             var gravityPowerMagnitude =
                 sun.GetGravityModifier() / Mathf.Pow(Vector3.Distance(sunPosition, positions[i - 1]), 2);
             time += expectedDeltaTime;
-            var speed = PlanetController.ROCKET_START_VELOCITY +
+            var speed = PlanetViewController.ROCKET_START_VELOCITY +
                         planetController.GetCurrentRocketSettings().acceleration * time;
             var gravityPower = (sunPosition - positions[i - 1]).normalized * gravityPowerMagnitude;
 

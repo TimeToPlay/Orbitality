@@ -1,45 +1,42 @@
 ﻿using System;
 using System.Threading;
 
-namespace ProjectUtils
+/// <summary>
+/// A CustomYieldInstruction that executes a task on a new thread and keeps waiting until it's done.
+/// http://JacksonDunstan.com/articles/3746
+/// </summary>
+class WaitForThreadedTask : UnityEngine.CustomYieldInstruction
 {
     /// <summary>
-    /// A CustomYieldInstruction that executes a task on a new thread and keeps waiting until it's done.
-    /// http://JacksonDunstan.com/articles/3746
+    /// If the thread is still running
     /// </summary>
-    class WaitForThreadedTask : UnityEngine.CustomYieldInstruction
+    private bool isRunning;
+
+    /// <summary>
+    /// Start the task by starting a thread with the given priority. It immediately executes the
+    /// given task. When the given task finishes, <see cref="keepWaiting"/> returns true.
+    /// </summary>
+    /// <param name="task">Task to execute in the thread</param>
+    /// <param name="priority">Priority of the thread to execute the task in</param>
+    public WaitForThreadedTask(
+        Action task,
+        ThreadPriority priority = ThreadPriority.Normal
+    )
     {
-        /// <summary>
-        /// If the thread is still running
-        /// </summary>
-        private bool isRunning;
-
-        /// <summary>
-        /// Start the task by starting a thread with the given priority. It immediately executes the
-        /// given task. When the given task finishes, <see cref="keepWaiting"/> returns true.
-        /// </summary>
-        /// <param name="task">Task to execute in the thread</param>
-        /// <param name="priority">Priority of the thread to execute the task in</param>
-        public WaitForThreadedTask(
-            Action task,
-            ThreadPriority priority = ThreadPriority.Normal
-        )
+        isRunning = true;
+        new Thread(() =>
         {
-            isRunning = true;
-            new Thread(() =>
-            {
-                task();
-                isRunning = false;
-            }).Start();
-        }
+            task();
+            isRunning = false;
+        }).Start();
+    }
 
-        /// <summary>
-        /// If the coroutine should keep waiting
-        /// </summary>
-        /// <value>If the thread is still running</value>
-        public override bool keepWaiting
-        {
-            get { return isRunning; }
-        }
+    /// <summary>
+    /// If the coroutine should keep waiting
+    /// </summary>
+    /// <value>If the thread is still running</value>
+    public override bool keepWaiting
+    {
+        get { return isRunning; }
     }
 }
