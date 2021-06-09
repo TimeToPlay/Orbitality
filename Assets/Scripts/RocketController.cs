@@ -15,7 +15,7 @@ public class RocketController : MonoBehaviour, IPoolable<IMemoryPool>, IDamageRe
     private GameController _gameController;
     private IMemoryPool _pool;
     private Action _onDisposeListener;
-    private RocketState _rocketState = new RocketState();
+    private RocketModel rocketModel = new RocketModel();
 
     [Inject]
     void Construct(
@@ -59,9 +59,9 @@ public class RocketController : MonoBehaviour, IPoolable<IMemoryPool>, IDamageRe
         }
     }
 
-    public RocketState GetCurrentState()
+    public RocketModel GetCurrentState()
     {
-        return _rocketState;
+        return rocketModel;
     }
 
     private void Update()
@@ -69,25 +69,22 @@ public class RocketController : MonoBehaviour, IPoolable<IMemoryPool>, IDamageRe
         var dir = _rigidbody2D.velocity.normalized;
         var angle = Mathf.Atan2(dir.y, dir.x);
         _pivotTransform.rotation = Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg - 90);
-        _rocketState.posX = transform.position.x;
-        _rocketState.posY = transform.position.y;
-        _rocketState.velocity = _rigidbody2D.velocity.magnitude;
-        _rocketState.rotationZ = transform.rotation.eulerAngles.z;
+        rocketModel.UpdateState(transform, _rigidbody2D.velocity.magnitude);
         if (!_renderer.isVisible)
         {
             Dispose();
         }
     }
 
-    public void Configure(RocketState state)
+    public void Configure(RocketModel model)
     {
-        _rocketState = state;
-        transform.position = new Vector3(_rocketState.posX, _rocketState.posY);
-        transform.rotation = Quaternion.Euler(0, 0, _rocketState.rotationZ);
-        _currentSettings = _rocketSettings.Find(setting => setting.rocketType == _rocketState.GetRocketType());
+        rocketModel = model;
+        transform.position = new Vector3(rocketModel.PosX, rocketModel.PosY);
+        transform.rotation = Quaternion.Euler(0, 0, rocketModel.RotationZ);
+        _currentSettings = _rocketSettings.Find(setting => setting.rocketType == rocketModel.RocketType);
         _rigidbody2D.rotation = 0;
-        _rigidbody2D.velocity = transform.up * _rocketState.velocity;
-        switch (_rocketState.GetRocketType())
+        _rigidbody2D.velocity = transform.up * rocketModel.Velocity;
+        switch (rocketModel.RocketType)
         {
             case RocketType.Normal:
                 ChangeColor(Color.grey);

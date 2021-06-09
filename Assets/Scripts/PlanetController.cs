@@ -7,9 +7,9 @@ using UnityEngine;
 using Utils;
 using Zenject;
 
-public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryPool>, IDisposable
+public class PlanetController : CelestialObject, IPoolable<PlanetModel, IMemoryPool>, IDisposable
 {
-    private PlanetState _planetState;
+    private PlanetModel planetModel;
     private float _currentAngleToSun;
     private RocketController.Factory _rocketFactory;
     [SerializeField] private Transform muzzleTransform;
@@ -43,35 +43,32 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
 
     void Update()
     {
-        var positionX = _planetState.settings.orbitRadius * Mathf.Cos(_currentAngleToSun);
-        var positionY = _planetState.settings.orbitRadius * Mathf.Sin(_currentAngleToSun);
-        var sign = _planetState.settings.clockwise ? 1 : -1;
-        _currentAngleToSun += _planetState.settings.solarAngularVelocity * Time.deltaTime * sign;
-        _planetState.currentAngleToSun = _currentAngleToSun;
+        var positionX = planetModel.Settings.orbitRadius * Mathf.Cos(_currentAngleToSun);
+        var positionY = planetModel.Settings.orbitRadius * Mathf.Sin(_currentAngleToSun);
+        var sign = planetModel.Settings.clockwise ? 1 : -1;
+        _currentAngleToSun += planetModel.Settings.solarAngularVelocity * Time.deltaTime * sign;
+        planetModel.CurrentAngleToSun = _currentAngleToSun;
         transform.position = new Vector3(positionX, positionY, transform.position.z);
-        var selfRotationDelta = _planetState.settings.selfRotationVelocity * Time.deltaTime;
-        transform.Rotate(Vector3.forward, _planetState.settings.clockwise ? selfRotationDelta : -selfRotationDelta);
+        var selfRotationDelta = planetModel.Settings.selfRotationVelocity * Time.deltaTime;
+        transform.Rotate(Vector3.forward, planetModel.Settings.clockwise ? selfRotationDelta : -selfRotationDelta);
         _currentHud.TransformWorldPosition(transform.position);
     }
 
     public void Shoot()
     {
-        if (_isCooldown || _isDead || _planetState.rocketAmmo[_currentRocketSettings.rocketType] <= 0) return;
+        if (_isCooldown || _isDead || planetModel.GetAmmoByType(_currentRocketSettings.rocketType) <= 0) return;
         var rocket = _rocketFactory.Create();
         var state = rocket.GetCurrentState();
-        state.rocketType = _currentRocketSettings.rocketType.ToString();
-        state.posX = muzzleTransform.position.x;
-        state.posY = muzzleTransform.position.y;
-        state.rotationZ = transform.rotation.eulerAngles.z;
-        state.velocity = ROCKET_START_VELOCITY;
+        state.RocketType = _currentRocketSettings.rocketType;
+        state.UpdateState(muzzleTransform.position, transform.rotation, ROCKET_START_VELOCITY);
         rocket.Configure(state);
-        _planetState.rocketAmmo[_currentRocketSettings.rocketType]--;
+        planetModel.DecrementAmmoByType(_currentRocketSettings.rocketType);
         StartCoroutine(StartCooldown());
     }
 
     public int GetCurrentAmmo()
     {
-        return _planetState.rocketAmmo[_currentRocketSettings.rocketType];
+        return planetModel.GetAmmoByType(_currentRocketSettings.rocketType);
     }
 
     private IEnumerator StartCooldown()
@@ -90,7 +87,7 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
         _currentHud.SetCooldown(_cooldown / _currentRocketSettings.cooldown);
     }
 
-    public class Factory : PlaceholderFactory<PlanetState, PlanetController>
+    public class Factory : PlaceholderFactory<PlanetModel, PlanetController>
     {
     }
 
@@ -99,25 +96,24 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
         transform.position = new Vector3(-1000, -1000, 0);
     }
 
-    public void OnSpawned(PlanetState state, IMemoryPool pool)
+    public void OnSpawned(PlanetModel model, IMemoryPool pool)
     {
-        _planetState = state;
+        planetModel = model;
         _pool = pool;
-        _currentAngleToSun = state.currentAngleToSun;
-        transform.localScale = new Vector3(state.settings.planetScale, state.settings.planetScale,
-            state.settings.planetScale);
+        _currentAngleToSun = model.CurrentAngleToSun;
+        transform.localScale = new Vector3(model.Settings.planetScale, model.Settings.planetScale,
+            model.Settings.planetScale);
         _currentHud = _hudFactory.Create();
         _currentRocketSettings = _rocketSettingsList[0];
         _isDead = false;
-        _planetState.nickname = state.nickname;
-        GetComponent<MeshRenderer>().material.color = state.color;
-        if (string.IsNullOrEmpty(state.nickname))
+        planetModel.SetNickname(model.Nickname);
+        GetComponent<MeshRenderer>().material.color = model.Color;
+        if (string.IsNullOrEmpty(model.Nickname))
         {
-            var nickname = NickGenerator.GetRandomNickname();
-            _planetState.nickname = nickname;
+            planetModel.SetNickname(NickGenerator.GetRandomNickname());
         }
 
-        _currentHud.Configure(_planetState.nickname, state.isPlayer, _gameSettings.initialPlanetHP, state.hp);
+        _currentHud.Configure(planetModel.Nickname, model.IsPlayer, _gameSettings.initialPlanetHP, model.Hp);
     }
 
     public override float GetGravityModifier()
@@ -127,9 +123,9 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
 
     public override void ReceiveDamage(int damage)
     {
-        _planetState.hp -= damage;
-        _currentHud.SetNewHp(_planetState.hp);
-        if (_planetState.hp <= 0)
+        planetModel.ApplyDamage(damage);
+        _currentHud.SetNewHp(planetModel.Hp);
+        if (planetModel.Hp <= 0)
         {
             Die();
         }
@@ -159,7 +155,7 @@ public class PlanetController : CelestialObject, IPoolable<PlanetState, IMemoryP
 
     public double GetOrbit()
     {
-        return _planetState.settings.orbitRadius;
+        return planetModel.Settings.orbitRadius;
     }
 
     public void Dispose()

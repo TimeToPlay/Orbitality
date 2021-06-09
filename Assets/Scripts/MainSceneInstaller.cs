@@ -28,8 +28,8 @@ public class MainSceneInstaller : MonoInstaller
                 .FromComponentInNewPrefab(_rocketPrefab)
                 .UnderTransform(RocketsRoot));
 
-        Container.BindFactory<PlanetState, PlanetController, PlanetController.Factory>()
-            .FromPoolableMemoryPool<PlanetState, PlanetController, PlanetControllerPool>(poolBinder => poolBinder
+        Container.BindFactory<PlanetModel, PlanetController, PlanetController.Factory>()
+            .FromPoolableMemoryPool<PlanetModel, PlanetController, PlanetControllerPool>(poolBinder => poolBinder
                 .WithInitialSize(10)
                 .FromComponentInNewPrefab(_planetPrefab)
                 .UnderTransform(PlanetRoot));
@@ -46,7 +46,7 @@ class RocketControllerPool : MonoPoolableMemoryPool<IMemoryPool, RocketControlle
 {
 }
 
-class PlanetControllerPool : MonoPoolableMemoryPool<PlanetState, IMemoryPool, PlanetController>
+class PlanetControllerPool : MonoPoolableMemoryPool<PlanetModel, IMemoryPool, PlanetController>
 {
 }
 

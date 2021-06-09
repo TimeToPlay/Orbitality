@@ -53,6 +53,7 @@ namespace SO
         }
     }
 
+    [Serializable]
     public enum RocketType
     {
         Normal,

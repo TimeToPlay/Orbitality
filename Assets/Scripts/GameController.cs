@@ -23,7 +23,7 @@ public class GameController : MonoBehaviour
     private RocketAmmoPanel _ammoPanel;
     private GameState currentGameState = GameState.MainMenu;
     private LocalSaveController _localSaveController;
-    private GameSaveInfo _gameSaveInfo = new GameSaveInfo();
+    private GameModel gameModel = new GameModel();
     private RocketController.Factory _rocketFactory;
     public List<CelestialObject> CelestialObjects => _celestialObjects;
 
@@ -105,12 +105,11 @@ public class GameController : MonoBehaviour
             DisposePools();
         }
 
-        _localSaveController.LoadSaveFile(delegate(GameSaveInfo info)
+        _localSaveController.LoadSaveFile(delegate(GameModel info)
         {
-            _gameSaveInfo = info;
-            _gameSaveInfo.PrepareForDeserialize();
+            gameModel = info;
             ApplyStates();
-            foreach (var rocketState in _gameSaveInfo.RocketStates)
+            foreach (var rocketState in gameModel.GetRocketModels())
             {
                 var rocket = _rocketFactory.Create();
                 rocket.Configure(rocketState);
@@ -126,18 +125,17 @@ public class GameController : MonoBehaviour
 
     public void SaveGame()
     {
-        _gameSaveInfo.RocketStates.Clear();
+        gameModel.ClearRocketStates();
 
         foreach (Transform rocketTr in _rocketPoolRoot)
         {
             if (rocketTr.gameObject.activeSelf)
             {
-                _gameSaveInfo.RocketStates.Add(rocketTr.GetComponent<RocketController>().GetCurrentState());
+                gameModel.AddNewRocketModel(rocketTr.GetComponent<RocketController>().GetCurrentState());
             }
         }
 
-        _gameSaveInfo.PrepareForSerialize();
-        var json = JsonUtility.ToJson(_gameSaveInfo);
+        var json = JsonUtility.ToJson(gameModel);
         _localSaveController.SaveProgress(json);
     }
 
@@ -149,7 +147,7 @@ public class GameController : MonoBehaviour
     {
         var playerIndex = Random.Range(0, _gameSettings.initialPlanetAmount);
         float previousOrbit = _gameSettings.MinimumOrbitRadius;
-        _gameSaveInfo.PlanetStates.Clear();
+        gameModel.ClearPlanetStates();
         for (int i = 0; i < _gameSettings.initialPlanetAmount; i++)
         {
             var randomPlanetSetting = new SettingsSO.PlanetSettings();
@@ -161,17 +159,21 @@ public class GameController : MonoBehaviour
                 _gameSettings.SolarAngularVelocityMax);
             randomPlanetSetting.selfRotationVelocity = Random.Range(_gameSettings.SelfRotationVelocityMin,
                 _gameSettings.SelfRotationVelocityMax);
-            var planetState = new PlanetState {settings = randomPlanetSetting, hp = _gameSettings.initialPlanetHP};
+            var randomColor = new Color(Random.Range(0.2f, 1f), Random.Range(0.2f, 1f), Random.Range(0.2f, 1f));
+            var randomAngleToSun = Random.Range(0, Mathf.PI * 2);
             var isPlayer = playerIndex == i;
-            planetState.isPlayer = isPlayer;
-            planetState.currentAngleToSun = Random.Range(0, Mathf.PI * 2);
-            planetState.color = new Color(Random.Range(0.2f, 1f), Random.Range(0.2f, 1f), Random.Range(0.2f, 1f));
+            var planetState = new PlanetModel(randomPlanetSetting,
+                _gameSettings.initialPlanetHP,
+                isPlayer,
+                randomAngleToSun,
+                randomColor
+            );
             foreach (var rocket in _rocketSettings)
             {
-                planetState.rocketAmmo.Add(rocket.rocketType, Random.Range(rocket.minAmmo, rocket.maxAmmo));
+                planetState.AddRocketAmmo(rocket.rocketType, Random.Range(rocket.minAmmo, rocket.maxAmmo));
             }
 
-            _gameSaveInfo.PlanetStates.Add(planetState);
+            gameModel.AddNewPlanetModel(planetState);
         }
     }
 
@@ -179,16 +181,16 @@ public class GameController : MonoBehaviour
     {
         _enemies.Clear();
         _celestialObjects.Clear();
-        foreach (var planetState in _gameSaveInfo.PlanetStates)
+        foreach (var planetState in gameModel.GetPlanetModels())
         {
             var planet = _planetFactory.Create(planetState);
-            if (planetState.isPlayer)
+            if (planetState.IsPlayer)
             {
                 _playerPlanet = planet;
                 _playerPlanet.onDieEvent = GameOver;
-                foreach (var key in planetState.rocketAmmo.Keys)
+                foreach (var ammoInfo in planetState.GetAmmoModelList())
                 {
-                    _ammoPanel.SetRocketAmmo(key, planetState.rocketAmmo[key]);
+                    _ammoPanel.SetRocketAmmo(ammoInfo.RocketType, ammoInfo.Ammo);
                 }
             }
             else

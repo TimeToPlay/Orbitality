@@ -15,7 +15,7 @@ public class LocalSaveController
         _localStorageHelper = localStorageHelper;
     }
 
-    public void LoadSaveFile(Action<GameSaveInfo> onSuccess, Action<string> onFailure)
+    public void LoadSaveFile(Action<GameModel> onSuccess, Action<string> onFailure)
     {
         MainThreadDispatcher.StartUpdateMicroCoroutine(
             _localStorageHelper.ReaderStringFileAsync(GetCurrentSavePath(),
@@ -27,7 +27,7 @@ public class LocalSaveController
                         return;
                     }
 
-                    var saveStoryModel = JsonUtility.FromJson<GameSaveInfo>(s);
+                    var saveStoryModel = JsonUtility.FromJson<GameModel>(s);
                     onSuccess(saveStoryModel);
                 }, onFailure));
     }
