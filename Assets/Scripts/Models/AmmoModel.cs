@@ -14,6 +14,7 @@ namespace Models
         [SerializeField] private int ammo;
         public RocketType RocketType => rocketType;
         public int Ammo => ammo;
+
         public AmmoModel(RocketType rocketType, int ammoCount)
         {
             this.rocketType = rocketType;

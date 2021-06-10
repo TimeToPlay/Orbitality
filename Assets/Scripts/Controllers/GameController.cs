@@ -7,11 +7,13 @@ using UniRx;
 using UnityEngine;
 using Views;
 using Zenject;
-using Random = UnityEngine.Random;
 
 namespace Controllers
 {
-    public class GameController: IDisposable
+    /// <summary>
+    /// Handle input, game states and game entities
+    /// </summary>
+    public class GameController : IDisposable
     {
         [Inject(Id = "sun")] private CelestialObject _sun;
         private PlanetViewController.Factory _planetFactory;
@@ -56,7 +58,6 @@ namespace Controllers
             SubscribeToUpdateAiSystem();
         }
 
-       
 
         #region PUBLIC METHODS
 
@@ -124,11 +125,12 @@ namespace Controllers
             {
                 gameModel.AddNewRocketModel(rocket.GetCurrentState());
             }
+
             var json = JsonUtility.ToJson(gameModel);
             _localSaveController.SaveProgress(json);
         }
-        
-        
+
+
         public void Dispose()
         {
             _compositeDisposable.Clear();
@@ -137,7 +139,6 @@ namespace Controllers
             {
                 enemy.OnDieEvent -= CheckAllEnemiesDead;
             }
-
         }
 
         public void UnregisterRocket(RocketViewController rocketController)
@@ -221,7 +222,7 @@ namespace Controllers
                     _mainMenuView.Show(currentGameState);
                 }).AddTo(_compositeDisposable);
         }
-        
+
         private void SubscribeToUpdateAiSystem()
         {
             Observable.EveryUpdate().Subscribe(_ =>
@@ -270,7 +271,6 @@ namespace Controllers
         }
 
         #endregion
-
     }
 
     public enum GameState

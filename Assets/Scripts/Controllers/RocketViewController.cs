@@ -8,6 +8,9 @@ using Zenject;
 
 namespace Controllers
 {
+    /// <summary>
+    /// ViewController for rocket entities
+    /// </summary>
     public class RocketViewController : MonoBehaviour, IPoolable<IMemoryPool>, IDisposable
     {
         [SerializeField] private Rigidbody2D _rigidbody2D;
@@ -64,14 +67,14 @@ namespace Controllers
             _pool = pool;
             _gameController.RegisterRocket(this);
         }
-        
-        
+
+
         public void Dispose()
         {
             _onDisposeListener?.Invoke();
             _pool.Despawn(this);
         }
-        
+
         public RocketModel GetCurrentState()
         {
             return rocketModel;
@@ -85,18 +88,13 @@ namespace Controllers
             }
         }
 
-        
+
         private void ConfigureUpdateMethods()
         {
-            Observable.EveryFixedUpdate().Where(_ => isActiveAndEnabled).Subscribe(_ =>
-            {
-                UpdateForces();
-            }).AddTo(this);
-            Observable.EveryUpdate().Where(_ => isActiveAndEnabled).Subscribe(_ =>
-            {
-                UpdateState();
-            }).AddTo(this);
+            Observable.EveryFixedUpdate().Where(_ => isActiveAndEnabled).Subscribe(_ => { UpdateForces(); })
+                .AddTo(this);
         }
+
         private void UpdateForces()
         {
             _rigidbody2D.AddForce(transform.up * (_currentSettings.acceleration * Time.fixedDeltaTime));
@@ -111,7 +109,7 @@ namespace Controllers
             }
         }
 
-        private void UpdateState()
+        private void Update()
         {
             var dir = _rigidbody2D.velocity.normalized;
             var angle = Mathf.Atan2(dir.y, dir.x);
@@ -123,7 +121,7 @@ namespace Controllers
             }
         }
 
-        
+
         private void OnCollisionEnter2D(Collision2D other)
         {
             var damageReceiver = other.gameObject.GetComponent<IDamageReceiver>();

@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace Controllers
 {
+    /// <summary>
+    /// Serialize/deserialize json into game model
+    /// </summary>
     public class LocalSaveController
     {
         private string gameDataFileName = "saves.json";

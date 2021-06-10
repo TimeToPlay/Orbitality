@@ -7,12 +7,17 @@ using UnityEngine;
 using Zenject;
 using Random = UnityEngine.Random;
 
+/// <summary>
+/// Decides what type of ammo use, and calculates approximately rocket trajectories 
+/// </summary>
 public class AISystem
 {
     private const double DISTANCE_TO_SHOT_DEADLY_WEAPON = 15;
-    [Inject(Id = "sun")]
-    private CelestialObject _sun;
+    private const int MAX_FRAME_TRESHOLD_FOR_RANDOM_SHOOT = 5;
+    private const int TRAJECTORY_POINT_COUNT = 100;
+    [Inject(Id = "sun")] private CelestialObject _sun;
     private List<PlanetViewController> _enemies;
+    Vector3[] _trajectoryPoints = new Vector3[TRAJECTORY_POINT_COUNT];
 
     public void RegisterEnemies(List<PlanetViewController> enemies)
     {
@@ -37,7 +42,8 @@ public class AISystem
                     if (hit2D.collider.gameObject.CompareTag("Planet"))
                     {
                         ChooseRocketType(enemy, hit2D.collider.transform);
-                        Observable.TimerFrame(Random.Range(0, 5)).Subscribe(_ => enemy.Shoot());
+                        Observable.TimerFrame(Random.Range(0, MAX_FRAME_TRESHOLD_FOR_RANDOM_SHOOT))
+                            .Subscribe(_ => enemy.Shoot());
                     }
                 }
             }
@@ -67,7 +73,7 @@ public class AISystem
     {
         if (planet.GetCurrentAmmo() > 0) return;
         var rocketTypeInt = (int) planet.GetCurrentRocketSettings().rocketType;
-        for (int i = 0; i < Enum.GetValues(typeof(RocketType)).Length; i++)
+        for (var i = 0; i < Enum.GetValues(typeof(RocketType)).Length; i++)
         {
             rocketTypeInt++;
             if (rocketTypeInt >= Enum.GetValues(typeof(RocketType)).Length)
@@ -87,31 +93,34 @@ public class AISystem
 
     #region BLACK MAGIC FUCKERY
 
-    //todo rewrite later
-    public Vector3[] CalculateForecastTrajectory(CelestialObject sun, PlanetViewController planetController)
+    /// <summary>
+    /// Calculates approximately trajectory for rockets
+    /// </summary>
+    /// <param name="sun"></param>
+    /// <param name="planetController"></param>
+    /// <returns></returns>
+    private Vector3[] CalculateForecastTrajectory(CelestialObject sun, PlanetViewController planetController)
     {
-        var trajectoryPointCount = 100;
-        Vector3[] positions = new Vector3[trajectoryPointCount];
-        positions[0] = planetController.GetMuzzle().position;
-        positions[1] = planetController.GetMuzzle().position + planetController.transform.up;
+        _trajectoryPoints[0] = planetController.GetMuzzle().position;
+        _trajectoryPoints[1] = planetController.GetMuzzle().position + planetController.transform.up;
         var time = 0f;
         var expectedDeltaTime = 0.016f;
-        for (int i = 2; i < trajectoryPointCount; i++)
+        for (int i = 2; i < TRAJECTORY_POINT_COUNT; i++)
         {
-            var dir = (positions[i - 1] - positions[i - 2]).normalized;
+            var dir = (_trajectoryPoints[i - 1] - _trajectoryPoints[i - 2]).normalized;
             var sunPosition = sun.transform.position;
             var gravityPowerMagnitude =
-                sun.GetGravityModifier() / Mathf.Pow(Vector3.Distance(sunPosition, positions[i - 1]), 2);
+                sun.GetGravityModifier() / Mathf.Pow(Vector3.Distance(sunPosition, _trajectoryPoints[i - 1]), 2);
             time += expectedDeltaTime;
             var speed = PlanetViewController.ROCKET_START_VELOCITY +
                         planetController.GetCurrentRocketSettings().acceleration * time;
-            var gravityPower = (sunPosition - positions[i - 1]).normalized * gravityPowerMagnitude;
+            var gravityPower = (sunPosition - _trajectoryPoints[i - 1]).normalized * gravityPowerMagnitude;
 
             var delta = (dir * (speed) + gravityPower) * expectedDeltaTime;
-            positions[i] = positions[i - 1] + delta;
+            _trajectoryPoints[i] = _trajectoryPoints[i - 1] + delta;
         }
 
-        return positions;
+        return _trajectoryPoints;
     }
 
     #endregion

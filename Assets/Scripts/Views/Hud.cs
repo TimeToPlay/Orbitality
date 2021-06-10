@@ -5,12 +5,15 @@ using Zenject;
 
 namespace Views
 {
+    /// <summary>
+    /// Planet hud, shows hp and rocket cooldown
+    /// </summary>
     public class Hud : MonoBehaviour, IPoolable<IMemoryPool>
     {
         [SerializeField] private Image hpBar;
         [SerializeField] private Image cooldownBar;
         [SerializeField] private TextMeshProUGUI nicknameText;
-        
+
         private IMemoryPool _pool;
         private int _maxHp;
         private int _cooldown;

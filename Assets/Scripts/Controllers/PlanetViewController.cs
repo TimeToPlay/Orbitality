@@ -11,9 +11,14 @@ using Zenject;
 
 namespace Controllers
 {
+    /// <summary>
+    /// View controller for planet entities
+    /// </summary>
     public class PlanetViewController : CelestialObject, IPoolable<PlanetModel, IMemoryPool>, IDisposable
     {
         public const float ROCKET_START_VELOCITY = 27;
+        private const float GRAVITY_COEF = 210;
+
         [SerializeField] private Transform muzzleTransform;
         public event Action OnDieEvent;
         public bool IsDead => _isDead;
@@ -95,7 +100,7 @@ namespace Controllers
 
         public override float GetGravityModifier()
         {
-            return transform.localScale.x * 210;
+            return transform.localScale.x * GRAVITY_COEF;
         }
 
         public override void ReceiveDamage(int damage)
@@ -136,14 +141,14 @@ namespace Controllers
             _currentHud.Despawn();
             _pool.Despawn(this);
         }
-        
+
         private void Die()
         {
             _isDead = true;
             OnDieEvent?.Invoke();
             Dispose();
         }
-        
+
         private IEnumerator StartCooldown()
         {
             _cooldown = _currentRocketSettings.cooldown;
@@ -164,7 +169,7 @@ namespace Controllers
         {
             Observable.EveryUpdate().Subscribe(_ => { UpdatePosition(); }).AddTo(this);
         }
-        
+
         private void UpdatePosition()
         {
             if (!isActiveAndEnabled) return;

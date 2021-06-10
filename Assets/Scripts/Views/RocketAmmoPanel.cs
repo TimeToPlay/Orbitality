@@ -2,6 +2,9 @@
 using SO;
 using UnityEngine;
 
+/// <summary>
+/// View to present player's ammo count
+/// </summary>
 public class RocketAmmoPanel : MonoBehaviour
 {
     [SerializeField] private RocketAmmoUI normalRocket;

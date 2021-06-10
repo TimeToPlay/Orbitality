@@ -19,7 +19,8 @@ namespace Models
         [SerializeField] private string nickname;
         [SerializeField] private SerializableColor color;
 
-        public PlanetModel(SettingsSO.PlanetSettings planetSetting, int initialPlanetHp, bool isPlayer, float currentAngleToSun, Color color)
+        public PlanetModel(SettingsSO.PlanetSettings planetSetting, int initialPlanetHp, bool isPlayer,
+            float currentAngleToSun, Color color)
         {
             settings = planetSetting;
             hp = initialPlanetHp;
@@ -48,7 +49,6 @@ namespace Models
         {
             var foundAmmoInfo = ammoInfoList.Find(info => info.RocketType == rocketType);
             return foundAmmoInfo?.Ammo ?? 0;
-
         }
 
         public void AddRocketAmmo(RocketType rocketType, int ammoCount)

@@ -2,7 +2,7 @@
 
 namespace Utils
 {
-    public class NickGenerator
+    public static class NickGenerator
     {
         private static string[] nicknames =
         {

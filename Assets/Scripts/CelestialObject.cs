@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// Base class for all planets and sun
+/// </summary>
 public class CelestialObject : MonoBehaviour, IDamageReceiver
 {
     [SerializeField] private float mass;

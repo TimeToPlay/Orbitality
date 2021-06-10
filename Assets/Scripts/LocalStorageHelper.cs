@@ -3,6 +3,9 @@ using System.Collections;
 using System.IO;
 using UnityEngine;
 
+/// <summary>
+/// Helper class to read/write from file
+/// </summary>
 public class LocalStorageHelper
 {
     public IEnumerator ReaderStringFileAsync(string file, Action<string> onSuccess, Action<string> onFailure)

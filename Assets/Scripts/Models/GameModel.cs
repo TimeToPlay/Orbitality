@@ -15,7 +15,8 @@ namespace Models
         public IEnumerable<RocketModel> GetRocketModels()
         {
             return rocketModels;
-        } 
+        }
+
         public IEnumerable<PlanetModel> GetPlanetModels()
         {
             return planetModels;
@@ -35,8 +36,9 @@ namespace Models
         {
             planetModels.Clear();
         }
-        
-        public void CreateRandomizedState(SettingsSO.GameSettings gameSettings, List<SettingsSO.RocketSettings> rocketSettings)
+
+        public void CreateRandomizedState(SettingsSO.GameSettings gameSettings,
+            List<SettingsSO.RocketSettings> rocketSettings)
         {
             var playerIndex = Random.Range(0, gameSettings.initialPlanetAmount);
             float previousOrbit = gameSettings.MinimumOrbitRadius;
@@ -67,6 +69,7 @@ namespace Models
                 {
                     planetModel.AddRocketAmmo(rocket.rocketType, Random.Range(rocket.minAmmo, rocket.maxAmmo));
                 }
+
                 planetModels.Add(planetModel);
             }
         }

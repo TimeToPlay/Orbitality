@@ -8,6 +8,9 @@ using Zenject;
 
 namespace Views
 {
+    /// <summary>
+    /// Views to show NEW GAME, SAVE GAME, LOAD GAME buttons
+    /// </summary>
     public class MainMenuView : MonoBehaviour
     {
         [SerializeField] private Button continuerButton;
